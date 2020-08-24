@@ -1,5 +1,4 @@
 const env = require('dotenv').config();
-const port = process.DB_PORT || 3000;
 const express = require('express');
 const path = require('path');
 const cookieSession = require('cookie-session');
@@ -175,6 +174,5 @@ app.use('/login', (req,res) => {
     res.status(404).send('<h1>404 Page Not Found!</h1>');
 });
 
-
 //FOR CMD COMMAND
-app.listen(port, () => console.log("Server is Running..."));
+app.listen(process.env.PORT||3000, () => console.log("Server is Running..."));
