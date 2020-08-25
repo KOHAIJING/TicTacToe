@@ -44,11 +44,6 @@
                       <label for="_pass">Password</label>
                       <input type="password" name="user_pass" id="_pass" class="form-control" placeholder="Password" required>
                     </div>
-                    <!-- <% if (locals.login_errors) {
-                      login_errors.forEach(function(error_msg){ %>
-                      <div class="alert alert-danger" role="alert"><%= error_msg %></div>
-                    <% });
-                    } %> -->
                     <% if (flashMessages) {
                         if (flashMessages.loginError) { %>
                           <div class="alert alert-danger" role="alert"><%= flashMessages.loginError %></div>

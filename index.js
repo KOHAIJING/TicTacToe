@@ -128,10 +128,6 @@ app.post("/register", ifLoggedin, // post data validation(using express-validato
       req.flash("oldName", req.body.user_name);
       req.flash("oldEmail", req.body.user_email);
       res.redirect("/register");
-      // res.render("registration", {
-      //   register_error: allErrors,
-      //   old_data: req.body,
-      // });
     }
   });
 
@@ -156,12 +152,9 @@ app.post("/login", ifLoggedin, [
             req.session.isLoggedIn = true;
             req.session.userID = rows[0].id;
             res.redirect("/home");
-          } else {
+          } else {// REDERING LOGIN PAGE WITH LOGIN VALIDATION ERROR
             req.flash("loginError","Invalid Password!");
             res.redirect('/login');
-            // res.render("login", {
-            //   login_errors: ["Invalid Password!"],
-            // });
           }
         })
           .catch((err) => {
@@ -175,9 +168,6 @@ app.post("/login", ifLoggedin, [
     // REDERING LOGIN PAGE WITH LOGIN VALIDATION ERRORS
     req.flash("loginErrors", allErrors);
     res.redirect('/login');
-    // res.render("login", {
-    //   login_errors: allErrors,
-    // });
   }
 });
 
