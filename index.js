@@ -86,12 +86,17 @@ app.post('/register', ifLoggedin, // post data validation(using express-validato
     const {user_name, user_pass, user_email, user_cpass} = req.body;
     // IF validation_result HAS NO ERROR
     if(validation_result.isEmpty()){
+      if(user_cpass !== user_pass){
+        Promise.reject('The confirm password must be same with the password');
+      }
+
         // password encryption (using bcryptjs)
         bcrypt.hash(user_pass, 12).then((hash_pass) => {
             // INSERTING USER INTO DATABASE
             dbConnection.execute("INSERT INTO `users`(`name`,`email`,`password`) VALUES(?,?,?)",[user_name,user_email, hash_pass])
             .then(result => {
-                res.send(`Your account has been created successfully, Now you can <a href="/login">Login</a>`);
+              alert('Your account has been created successfully, Now you can <a href="/login">Login</a>');
+                //res.send(`Your account has been created successfully, Now you can <a href="/login">Login</a>`);
             }).catch(err => {
                 // THROW INSERTING USER ERROR'S
               if (err) throw err;
