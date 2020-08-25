@@ -3,6 +3,7 @@ const express = require("express");
 const path = require("path");
 const cookieSession = require("cookie-session");
 const expressSession = require("express-session");
+const MemoryStore = require('memorystore')(expressSession);
 const cookieParser = require("cookie-parser");
 const connectFlash = require("connect-flash");
 const bcrypt = require("bcryptjs");
@@ -26,10 +27,11 @@ app.use(cookieSession({
 // SET FLASH MESSAGE SESSION
 app.use(cookieParser('secret'));
 app.use(expressSession({
-  secret: "secret_passcode",
-  cookie: {
-    maxAge: 4000000
-  },
+  cookie: { maxAge: 86400000 },
+  store: new MemoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  secret: 'secret_passcode',
   resave: false,
   saveUninitialized: false
 }));
