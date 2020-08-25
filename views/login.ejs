@@ -13,6 +13,9 @@
 		body {
 			background-color:pink;
 		}
+    .alert{
+      text-align: center;
+    }
      .box{
        margin: auto;
      }
@@ -23,6 +26,10 @@
 		</style>
 </head>
 <body>
+  <% if (flashMessages) { %>
+    <% if (flashMessages.success) { %>
+        <div class="alert alert-success" role="alert"><%= flashMessages.success %></div>
+    <% }} %>
     <div class="container p-5">
         <h1 class="text-center mb-5 text-uppercase text-muted">Welcome To Tic Tac Toe! </h1>
         <div class="row">
@@ -37,11 +44,19 @@
                       <label for="_pass">Password</label>
                       <input type="password" name="user_pass" id="_pass" class="form-control" placeholder="Password" required>
                     </div>
-                    <% if (locals.login_errors) {
+                    <!-- <% if (locals.login_errors) {
                       login_errors.forEach(function(error_msg){ %>
                       <div class="alert alert-danger" role="alert"><%= error_msg %></div>
                     <% });
-                    } %>
+                    } %> -->
+                    <% if (flashMessages) {
+                        if (flashMessages.loginError) { %>
+                          <div class="alert alert-danger" role="alert"><%= flashMessages.loginError %></div>
+                      <% } else if (flashMessages.loginErrors) {
+                        flashMessages.loginErrors.forEach(function(error_msg){ %>
+                          <div class="alert alert-danger" role="alert"><%= error_msg %></div>
+                      <% });
+                    }}%>
                     <div class="col-sm">
                       <button type="submit" class="btn btn-success">Login</button>
                       <a href="/register" class="btn btn-primary">Register Account</a>

@@ -2,6 +2,9 @@ const env = require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const cookieSession = require("cookie-session");
+const expressSession = require("express-session");
+const cookieParser = require("cookie-parser");
+const connectFlash = require("connect-flash");
 const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const dbConnection = require("./database");
@@ -20,6 +23,22 @@ app.use(cookieSession({
   maxAge: 3600 * 1000, // 1hr
 }));
 
+// SET FLASH MESSAGE SESSION
+app.use(cookieParser('secret'));
+app.use(expressSession({
+  secret: "secret_passcode",
+  cookie: {
+    maxAge: 4000000
+  },
+  resave: false,
+  saveUninitialized: false
+}));
+app.use(connectFlash());
+app.use((req, res, next) => {
+  res.locals.flashMessages = req.flash();
+  next();
+});
+
 // DECLARING CUSTOM MIDDLEWARE
 const ifNotLoggedin = (req, res, next) => {
   if (!req.session.isLoggedIn) {
@@ -35,27 +54,23 @@ const ifLoggedin = (req, res, next) => {
 };
 
 // ROOT PAGE - DETERMINE WHETHER DIRECT TO LOGIN PAGE OR HOME PAGE
-app.get("/", (req, res) => {
-  if (!req.session.isLoggedIn) {
-    return res.redirect("/login");
-  }
-
+app.get("/",  ifNotLoggedin, (req, res, next) => {
   dbConnection.execute("SELECT `name` FROM `users` WHERE `id`=?", [req.session.userID])
     .then(() => { res.redirect("/home"); });
 });
 
 // DIRECT TO REGISTRATION PAGE
-app.get("/register", (req, res) => {
+app.get("/register", ifLoggedin, (req, res, next) => {
   res.render("registration");
 });
 
 // DIRECT TO LOGIN PAGE
-app.get("/login", (req, res) => {
+app.get("/login", ifLoggedin, (req, res, next) => {
   res.render("login");
 });
 
 // DIRECT TO HOME PAGE
-app.get("/home", (req, res) => {
+app.get("/home", ifNotLoggedin, (req, res, next) => {
   dbConnection.execute("SELECT `name` FROM `users` WHERE `id`=?", [req.session.userID])
     .then(([rows]) => {
       res.render("home", {
@@ -91,25 +106,32 @@ app.post("/register", ifLoggedin, // post data validation(using express-validato
         // INSERTING USER INTO DATABASE
         dbConnection.execute("INSERT INTO `users`(`name`,`email`,`password`) VALUES(?,?,?)", [user_name, user_email, hash_pass])
           .then((result) => {
-            res.send("Your account has been created successfully, Now you can <a href=\"/login\">Login</a>");
-            // res.send(`Your account has been created successfully, Now you can <a href="/login">Login</a>`);
-          }).catch((err) => {
-            // THROW INSERTING USER ERROR'S
-            if (err) throw err;
-          });
-      })
+            //req.flash("success", "Your account has been created successfully.");
+              req.flash("success", `${user_name}'s account created successfully!`);
+              res.redirect('/login');
+            }
+          )
         .catch((err) => {
           // THROW HASING ERROR'S
-          if (err) throw err;
+          if (err) {
+            //req.flash("errors",`Failed to create user account because:  ${error.message}.`});
+            throw err;
+          }
         });
-    } else {
+    })}
+    else {
       // COLLECT ALL THE VALIDATION ERRORS
       const allErrors = validation_result.errors.map((error) => error.msg);
       // REDERING REGISTRATION PAGE WITH VALIDATION ERRORS
-      res.render("registration", {
-        register_error: allErrors,
-        old_data: req.body,
-      });
+      req.flash("registerErrors", allErrors);
+      req.flash("oldData", req.body);
+      req.flash("oldName", req.body.user_name);
+      req.flash("oldEmail", req.body.user_email);
+      res.redirect("/register");
+      // res.render("registration", {
+      //   register_error: allErrors,
+      //   old_data: req.body,
+      // });
     }
   });
 
@@ -135,9 +157,11 @@ app.post("/login", ifLoggedin, [
             req.session.userID = rows[0].id;
             res.redirect("/home");
           } else {
-            res.render("login", {
-              login_errors: ["Invalid Password!"],
-            });
+            req.flash("loginError","Invalid Password!");
+            res.redirect('/login');
+            // res.render("login", {
+            //   login_errors: ["Invalid Password!"],
+            // });
           }
         })
           .catch((err) => {
@@ -149,9 +173,11 @@ app.post("/login", ifLoggedin, [
   } else {
     const allErrors = validation_result.errors.map((error) => error.msg);
     // REDERING LOGIN PAGE WITH LOGIN VALIDATION ERRORS
-    res.render("login", {
-      login_errors: allErrors,
-    });
+    req.flash("loginErrors", allErrors);
+    res.redirect('/login');
+    // res.render("login", {
+    //   login_errors: allErrors,
+    // });
   }
 });
 
