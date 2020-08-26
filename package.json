@@ -6,6 +6,8 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "app-root-path": "^3.0.0",
+    "bcrypt": "^5.0.0",
     "bcryptjs": "^2.4.3",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.5",
@@ -20,12 +22,14 @@
     "jade": "~1.11.0",
     "memorystore": "^1.6.2",
     "morgan": "~1.9.1",
-    "mysql2": "^2.1.0"
+    "mysql2": "^2.1.0",
+    "socket.io": "^2.3.0"
   },
   "devDependencies": {
     "eslint": "^7.7.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-vue": "^6.2.2",
     "nodemon": "^2.0.4"
   },
