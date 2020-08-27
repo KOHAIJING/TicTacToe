@@ -6,13 +6,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Welcome To Tic Tac Toe</title>
-    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"> -->
+    <title>Tic Tac Toe - Login</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style type="text/css">
 		body {
-			background-color:pink;
-		}
+      background-image: url('https://ak.picdn.net/shutterstock/videos/21184336/thumb/1.jpg');
+      background-size: 100%;
+    }
     .alert{
       text-align: center;
     }
@@ -27,15 +27,21 @@
 </head>
 <body>
   <% if (flashMessages) { %>
-    <% if (flashMessages.success) { %>
-        <div class="alert alert-success" role="alert"><%= flashMessages.success %></div>
-    <% }} %>
+    <% if (flashMessages.success) {
+      flashMessages.success.forEach(function(success_msg){%>
+        <div class="alert alert-success" role="alert"><%= success_msg %></div>
+    <% });
+    } else if (flashMessages.errors) {
+          flashMessages.errors.forEach(function(error_msg){ %>
+              <div class="alert alert-danger" role="alert"><%= error_msg %></div>
+  <% });
+  }} %>
     <div class="container p-5">
-        <h1 class="text-center mb-5 text-uppercase text-muted">Welcome To Tic Tac Toe! </h1>
+        <h1 class="text-center mb-5 text-uppercase">Welcome To Tic Tac Toe! </h1>
         <div class="row">
             <div class="box col-sm-5 bg-light border rounded py-3">
                 <h2 class="text-center">Login</h2>
-                <form action="" method="POST">
+                <form action="/api/login" method="POST">
                     <div class="form-group">
                       <label for="_email">Email</label>
                       <input type="email" name="user_email" id="_email" class="form-control" placeholder="Email" required>
@@ -45,9 +51,7 @@
                       <input type="password" name="user_pass" id="_pass" class="form-control" placeholder="Password" required>
                     </div>
                     <% if (flashMessages) {
-                        if (flashMessages.loginError) { %>
-                          <div class="alert alert-danger" role="alert"><%= flashMessages.loginError %></div>
-                      <% } else if (flashMessages.loginErrors) {
+                        if (flashMessages.loginErrors) {
                         flashMessages.loginErrors.forEach(function(error_msg){ %>
                           <div class="alert alert-danger" role="alert"><%= error_msg %></div>
                       <% });

@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "author": "Koh Ai Jing",
   "dependencies": {
     "app-root-path": "^3.0.0",
     "bcrypt": "^5.0.0",
@@ -30,7 +32,6 @@
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-vue": "^6.2.2",
     "nodemon": "^2.0.4"
   },
   "engines": {
