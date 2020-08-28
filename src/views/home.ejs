@@ -79,11 +79,13 @@
       let myTurn = true;
       let symbol;
       let finish = false;
+      let match = false;
 
       //LOGOUT TOOLTIP (WHEN MOUSE HOVER, DISPLAY THE LOGOUT LABEL WITH SPEECH BUBBLE LAYOUT)
       $(document).ready(function(){
         $('[data-toggle=\'tooltip\']').tooltip();
       });
+
       //CONNECT TO SOCKET AND GET USER NAME WHICH STORED IN SESSION (PASS FROM HOME CONTROLLER)
       const url = window.location.origin;
       const socket = io.connect( `${url}?name=${<%- JSON.stringify(name) %>}`);
@@ -129,7 +131,8 @@
               count ++;
           });
           finish = count == 9;
-          return xbool || obool || finish;
+          match = xbool || obool;
+          return match || finish;
         }
         catch (error) {
           throw new Error(`IsGameOver Error: ${error.message}`);
@@ -204,13 +207,13 @@
           renderTurnMessage(data.opponentName);
         } else {
           if(finish) {
-            $("#message").text('Draw!');
+            $('#message').html(`<b style='color:blue'>Draw!</b>`);
           }
           else{
             if (myTurn) {
-              $("#message").text('You lost!');
+              $('#message').html(`You <b style='color:blue'>lose</b>!`);
             } else {
-              $("#message").text('You won!');
+              $('#message').html(`You <b style='color:blue'>win</b>!`);
             }
           }
           $(".board button").attr("disabled", true);
