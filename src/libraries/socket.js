@@ -10,9 +10,9 @@ class Socket {
 
   init() {
     try {
-//CONNECTED
-      this.socket.on('connection', (socket) => {
-        //WHEN A CLIENT CONNECTS, CONSOLE DISPLAY SOCKET NAME AND ID
+//CONNECTED (WHEN CLIENT CONNECTS, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'connect')
+      this.socket.on('connect', (socket) => {
+        //CONSOLE DISPLAY SOCKET NAME AND ID
         const { id } = socket;
         const { name } = socket.handshake.query;
         console.log(`New client connected. Client Name: ${name}   Socket ID: ${id}`);
@@ -28,19 +28,20 @@ class Socket {
         //IF HAS, BEGIN THE GAME BY:
         if (opponent) {
           //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'game.begin'
-          //AND PASS SYMBOL AND OPPONENT'S NAME
+          //AND PASS CURRENT CLIENT'S SYMBOL AND OPPONENT'S NAME TO CURRENT CLIENT
           socket.emit('game.begin', {
             symbol: this.players[id].symbol,
             opponentName: this.players[opponent.id].name,
           });
           //SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'game.begin'
-          //AND PASS SYMBOL AND OPPONENT'S NAME TO OPPONENT
+          //AND PASS OPPONENT'S SYMBOL AND CURRENT CLIENT'S NAME TO OPPONENT
           opponent.emit('game.begin', {
             symbol: this.players[opponent.id].symbol,
             opponentName: this.players[id].name,
           });
         }
-//WHEN PLAYER MAKE ACTION
+
+//WHEN PLAYER MAKE ACTION (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'make.move')
         socket.on('make.move', (data) => {
           //CALLING FUNCTION: RETURN OPPONENT SOCKET ID OR RETURN NULL MEANS NO OPPONENT:
           const opponent = this.opponentOf(socket);
@@ -48,16 +49,17 @@ class Socket {
           if (!opponent) return;
           //IF HAS OPPONENT, SEND TO THE CURRENT CLIENT, OPPONENT EVENT NAME 'move.made'
           //AND PASS OPPONENT'S SOCKET NAME TO CURRENT CLIENT WITH MERGING OPPONENT'S data
+          //data IS FROM FRONT END SIDE, CONTAINS CELL SYMBOL AND CELL ATTRIBUTE ID
           socket.emit('move.made', { ...data, opponentName: this.players[opponent.id].name });
           //SEND TO THE OPPONENT, THE CURRENT CLIENT EVENT NAME 'move.made'
           //AND PASS THE data TO OPPONENT
           opponent.emit('move.made', data);
         });
 
-//DISCONNECTED
+//DISCONNECTED (WHEN CLIENT DISCONNECT, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'disconnect')
         socket.on('disconnect', () => {
           ////WHEN THE CURRENT CLIENT'S SOCKET DISCONNECTED, CONSOLE DISPLAY SOCKET ID
-          console.log(`Client disconnected. Socket ID: ${id}`);
+          console.log(`Client disconnected. Client Name: ${name}  Socket ID: ${id}`);
           //DELETE FROM 'clients'
           delete this.clients[id];
           //SEND TO ALL CLIENTS, THE CURRENT CLIENT'S EVENT NAME 'client.disconnect'
@@ -78,7 +80,8 @@ class Socket {
         });
 
       });
-    } catch (error) {
+    }
+    catch (error) {
       throw new Error(`SocketInit Error: ${error.message}`);
     }
   }
@@ -96,7 +99,7 @@ class Socket {
       };
       //CHECK 'unmatched' ARRAY TO SEE WHETHER HAS SOCKET ID IS WAITING OPPONENT:
       if (this.unmatched.length > 0) {
-        //IF HAS, UPDATE THE CURRENT CLIENT'S OPPONENTID, SYMBOL AND OPPONENT'S OPPONENTID
+        //IF HAS, UPDATE THE CURRENT CLIENT'S OPPONENTID, SYMBOL="O" AND OPPONENT'S OPPONENTID
         //unmatched = [socketId1, socketId2]
         const unmatchedPlayerSocketId = this.unmatched.shift();
         this.players[id].symbol = 'O';
@@ -107,7 +110,8 @@ class Socket {
         //unmatched = [ socketId ]
         this.unmatched.push(id);
       }
-    } catch (error) {
+    }
+    catch (error) {
       throw new Error(`JoinGame Error: ${error.message}`);
     }
   }
@@ -121,7 +125,8 @@ class Socket {
       //IF HAS, FIND AND RETURN THE OPPONENT SOCKET ID
       const player = this.players[opponent];
       return player && player.socket ? player.socket : null;
-    } catch (error) {
+    }
+    catch (error) {
       throw new Error(`OpponentOf Error: ${error.message}`);
     }
   }

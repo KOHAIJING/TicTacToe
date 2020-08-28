@@ -74,124 +74,159 @@
     <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js'></script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
     <script type='text/javascript'>
+      let myTurn = true;
+      let symbol;
+      let finish = false;
+
+      //LOGOUT TOOLTIP (WHEN MOUSE HOVER, DISPLAY THE LOGOUT LABEL WITH SPEECH BUBBLE LAYOUT)
       $(document).ready(function(){
         $('[data-toggle=\'tooltip\']').tooltip();
       });
-
-      // Connect to socket
+      //CONNECT TO SOCKET AND GET USER NAME WHICH STORED IN SESSION (PASS FROM HOME CONTROLLER)
       const url = window.location.origin;
       const socket = io.connect( `${url}?name=${<%- JSON.stringify(name) %>}`);
 
-      let myTurn = true;
-      let symbol;
-
-      const getBoardStatse = () => {
+      //RETURN 'boardState' OBJECT CONTAINS 9 CELLS ATTRIBUTES ID (r0c0, r0c1, ..., r2c2)
+      //AND THEIR VALUES ('X', 'O' or '')
+      //boardState = { boardbutton.id : boardbutton.text }
+      const getBoardState = () => {
         try {
           const boardState = {};
-
           $(".board button").each(function() {
             boardState[$(this).attr("id")] = $(this).text() || "";
           });
-
           return boardState;
-        } catch (error) {
-          throw new Error(`Get board state: ${error.message}`);
+        }
+        catch (error) {
+          throw new Error(`getBoardState Error: ${error.message}`);
         }
       };
 
+      //CALLING getBoardState FUNCTION
+      //AND INSERT ALL POSSIBLE CELL MATCHES WITH ATTRIBUTE VALUES INTO 'rows' ARRAY
+      //AND COUNT THE TOTAL CLICKED CELLS, IF count=9 RETURN TRUE
+      //AND RETURN 'xbool'||'ybool' DETERMINE IF THERE HAS xxx, ooo MATCHED
       const isGameOver = () => {
         try {
-          const state = getBoardStatse();
+          const state = getBoardState();
           const rows = [
-            state.r0c0 + state.r0c1 + state.r0c2, // 1st line
-            state.r1c0 + state.r1c1 + state.r1c2, // 2nd line
-            state.r2c0 + state.r2c1 + state.r2c2, // 3rd line
-            state.r0c0 + state.r1c0 + state.r2c0, // 1st column
-            state.r0c1 + state.r1c1 + state.r2c1, // 2nd column
-            state.r0c2 + state.r1c2 + state.r2c2, // 3rd column
-            state.r0c0 + state.r1c1 + state.r2c2, // Primary diagonal
-            state.r0c2 + state.r1c1 + state.r2c0  // Secondary diagonal
+            state.r0c0 + state.r0c1 + state.r0c2, // 1st line (-)
+            state.r1c0 + state.r1c1 + state.r1c2, // 2nd line (-)
+            state.r2c0 + state.r2c1 + state.r2c2, // 3rd line (-)
+            state.r0c0 + state.r1c0 + state.r2c0, // 1st column (|)
+            state.r0c1 + state.r1c1 + state.r2c1, // 2nd column (|)
+            state.r0c2 + state.r1c2 + state.r2c2, // 3rd column (|)
+            state.r0c0 + state.r1c1 + state.r2c2, // Primary diagonal (\)
+            state.r0c2 + state.r1c1 + state.r2c0  // Secondary diagonal (/)
           ];
-
           const xbool = rows.includes('XXX');
           const obool = rows.includes('OOO');
-
-          return xbool || obool;
-        } catch (error) {
-          throw new Error(`Is game over: ${error.message}`);
+          let count = 0;
+          $(".board button").each(function() {
+            if($(this).text()!== "")
+              count ++;
+          });
+          finish = count == 9;
+          return xbool || obool || finish;
+        }
+        catch (error) {
+          throw new Error(`IsGameOver Error: ${error.message}`);
         }
       };
 
+      //IF myTurn = false MEANS NOT THE CURRENT CLIENT'S TURN, RETURN NO ACTION
+      //IF THE CELL HAS ATTRIBUTE VALUE, RETURN NO ACTION
+      //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'make.move'
+      //AND PASS SYMBOL AND POSITION (CELL ATTRIBUTE ID)
       const makeMove = (position) => {
         try {
           if (!myTurn) return;
-          if ($(this).text().length) return;
-
-          socket.emit('make.move', {
-            symbol,
-            position,
-          });
+          if ($(this).text().length) return; //validate
+          socket.emit('make.move', {symbol, position,});
         } catch (error) {
           throw new Error(`Make move: ${error.message}`);
         }
       };
 
+      //IF NOT THE CURRENT CLIENT'S TURN, DISPLAY OPPONENT LEAVE MESSAGE AND DISABLE THE BOARD
+      //IF YES, DISPLAY YOUR TURN MESSAGE AND ENABLE THE BOARD
       const renderTurnMessage = (opponentName) => {
         try {
-          if (!myTurn) { // If not player's turn disable the board
+          if (!myTurn) {
             $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b>'s turn`);
             $('.board button').attr('disabled', true);
-          } else { // Enable it otherwise
+          } else {
             $('#message').text('Your turn');
             $('.board button').removeAttr('disabled');
+            $(".board button").each(function() {
+              if ($(this).text().length)
+                $(this).attr('disabled', true);
+            });
           }
         } catch (error) {
           throw new Error(`Render turn message: ${error.message}`);
         }
       };
 
-      socket.on('connect', () => {
-        console.log('Connected to socket');
-      });
-
-      socket.on('opponent.left', ({ opponentName }) => {
-        $('#message').text(`Your opponent ${opponentName} left the game`);
+      //DISABLE BOARD AT THE BEGINNING
+      //AND CALLING THE makeMove FUNCTION WHEN PLAYER CLICK BUTTON WITH IT'S CELL ATTRIBUTE ID
+      $(function() {
         $('.board button').attr('disabled', true);
+        $('.board button').click(function() {
+          makeMove($(this).attr('id'));
+        });
       });
 
+      //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'game.begin'
+      //AND CALLING renderTurnMessage FUNCTION WITH OPPONENT NAME
+      //WHERE symbol SET TO X, myTurn SET TO true, IF THE RECEIVED SYMBOL is X
+      //myTurn symbol SET TO O, myTurn SET TO false, IF THE RECEIVED SYMBOL is O
+      //MEANS THE GAME WILL BEGIN FROM PLAYER WITH SYMBOL X SINCE myTurn SET TO true IN THE BEGINNING
       socket.on('game.begin', ({ symbol: symbolSign, opponentName }) => {
         symbol = symbolSign;
         myTurn = symbol === 'X';
         renderTurnMessage(opponentName);
       });
 
+      //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'move.made'
+      //RECEIVED data = data.symbol, data.position, data.opponentName
+      //CHANGE TURN (IF PLAYER'S SYMBOL != CURRENT SYMBOL THEN myTurn IS TRUE)
+      //CALLING isGameOver FUNCTION
+      //IF RETURN FALSE, CALLING renderTurnMessage FUNCTION WITH OPPONENT NAME
+      //IF RETURN TRUE, myTurn TRUE SIDE WILL LOSE, FALSE SIDE WILL WIN
+      //THEN DISABLE BOARD AND DISPLAY WINDOW MESSAGE
       socket.on('move.made', (data) => {
         $("#" + data.position).text(data.symbol);
         myTurn = data.symbol !== symbol;
         if (!isGameOver()) {
           renderTurnMessage(data.opponentName);
         } else {
-          if (myTurn) {
-            $("#message").text('You lost!');
-          } else {
-            $("#message").text('You won!');
+          if(finish) {
+            $("#message").text('Draw!');
           }
-
+          else{
+            if (myTurn) {
+              $("#message").text('You lost!');
+            } else {
+              $("#message").text('You won!');
+            }
+          }
           $(".board button").attr("disabled", true);
-
           setTimeout(() => {
             if (window.confirm('Play again?')) location.reload();
           }, 3000);
         }
       });
 
-      $(function() {
-        $('.board button').attr('disabled', true); // Disable board at the beginning
-        $('.board button').click(function() {
-          makeMove($(this).attr('id'));
-        });
+      //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'opponent.left'
+      //AND DISPLAY MESSAGE AND DISABLE THE BOARD
+      socket.on('opponent.left', ({ opponentName }) => {
+        $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b> left the game`);
+        $('.board button').attr('disabled', true);
       });
     </script>
+
 </body>
 </html>
