@@ -79,6 +79,7 @@
       let myTurn = true;
       let symbol;
       let finish = false;
+      let match = false;
 
       //LOGOUT TOOLTIP (WHEN MOUSE HOVER, DISPLAY THE LOGOUT LABEL WITH SPEECH BUBBLE LAYOUT)
       $(document).ready(function(){
@@ -129,7 +130,8 @@
               count ++;
           });
           finish = count == 9;
-          return xbool || obool || finish;
+          match = xbool || obool;
+          return match || finish;
         }
         catch (error) {
           throw new Error(`IsGameOver Error: ${error.message}`);
@@ -204,13 +206,14 @@
           renderTurnMessage(data.opponentName);
         } else {
           if(finish) {
-            $("#message").text('Draw!');
+            $('#message').html(`<b style='color:blue'>Draw!</b>`);
+            //$("#message").text('Draw!');
           }
           else{
             if (myTurn) {
-              $("#message").text('You lost!');
+              $('#message').html(`You <b style='color:blue'>lose</b>!`);
             } else {
-              $("#message").text('You won!');
+              $('#message').html(`You <b style='color:blue'>won</b>!`);
             }
           }
           $(".board button").attr("disabled", true);
