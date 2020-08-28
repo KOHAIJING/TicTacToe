@@ -215,6 +215,7 @@
             } else {
               $('#message').html(`You <b style='color:blue'>win</b>!`);
             }
+          }
           $(".board button").attr("disabled", true);
           setTimeout(() => {
             if (window.confirm('Play again?')) location.reload();
