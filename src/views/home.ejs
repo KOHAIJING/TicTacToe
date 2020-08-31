@@ -132,10 +132,46 @@
           });
           finish = count == 9;
           match = xbool || obool;
+
+          //IF MATCHED, CALLING highlightCells FUNCTION AND HIGHLIGHT THE WINNER'S 3 CELLS
+          if(match){
+            let index = 0;
+            if(xbool)
+              index = rows.indexOf('XXX');
+            else
+              index = rows.indexOf('OOO');
+            highlightCells(rows, index);
+          }
+
           return match || finish;
         }
         catch (error) {
           throw new Error(`IsGameOver Error: ${error.message}`);
+        }
+      };
+
+      //LOOP ALL 9 CELLS AND SEE IF THE CELL ID = MATCHED CELL ID, CHANGE THE CELL'S TEXT TO BLUE
+      const highlightCells = (rows, index) => {
+        try {
+          const rowId = [
+            ['r0c0', 'r0c1', 'r0c2'],
+            ['r1c0', 'r1c1', 'r1c2'],
+            ['r2c0', 'r2c1', 'r2c2'],
+            ['r0c0', 'r1c0', 'r2c0'],
+            ['r0c1', 'r1c1', 'r2c1'],
+            ['r0c2', 'r1c2', 'r2c2'],
+            ['r0c0', 'r1c1', 'r2c2'],
+            ['r0c2', 'r1c1', 'r2c0']
+          ];
+          for(let i = 0; i < 3; i++){
+            $(".board button").each(function() {
+              if($(this).attr("id") === rowId[index][i])
+                $(this).html(`<text style='color:blue'>${$(this).text()}</text>`);
+            });
+          }
+        }
+        catch (error) {
+        throw new Error(`HighlightCells Error: ${error.message}`);
         }
       };
 
@@ -149,12 +185,12 @@
           if ($(this).text().length) return; //validate
           socket.emit('make.move', {symbol, position,});
         } catch (error) {
-          throw new Error(`Make move: ${error.message}`);
+          throw new Error(`MakeMove Error: ${error.message}`);
         }
       };
 
       //IF NOT THE CURRENT CLIENT'S TURN, DISPLAY OPPONENT LEAVE MESSAGE AND DISABLE THE BOARD
-      //IF YES, DISPLAY YOUR TURN MESSAGE AND ENABLE THE BOARD
+      //IF YES, DISPLAY YOUR TURN MESSAGE AND ENABLE THE BOARD AND DISABLE CLICKED CELLS
       const renderTurnMessage = (opponentName) => {
         try {
           if (!myTurn) {
@@ -169,7 +205,7 @@
             });
           }
         } catch (error) {
-          throw new Error(`Render turn message: ${error.message}`);
+          throw new Error(`RenderTurnMessage Error: ${error.message}`);
         }
       };
 
