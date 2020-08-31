@@ -130,8 +130,8 @@
             if($(this).text()!== "")
               count ++;
           });
-          finish = count == 9;
           match = xbool || obool;
+          finish = count == 9 && !match;
 
           //IF MATCHED, CALLING highlightCells FUNCTION AND HIGHLIGHT THE WINNER'S 3 CELLS
           if(match){
