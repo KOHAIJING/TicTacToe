@@ -24,8 +24,8 @@
 <body>
   <% if (flashMessages) { %>
     <% if (flashMessages.errors) {
-          flashMessages.errors.forEach(function(error_msg){ %>
-              <div class="alert alert-danger" role="alert"><%= error_msg %></div>
+          flashMessages.errors.forEach(function(errorMsg){ %>
+              <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
   <% });
   }} %>
     <div class="container p-5">
@@ -35,25 +35,25 @@
               <h2 class="text-center">Registration</h2>
               <form action="/api/register" method="POST">
                       <div class="form-group">
-                        <label for="_rname">Name</label>
-                        <input type="text" name="user_name" id="_rname" class="form-control" placeholder="Name" value="<%= (flashMessages.oldData) ? flashMessages.oldName : ''; %>" required>
+                        <label for="rname">Name</label>
+                        <input type="text" name="userName" id="rname" class="form-control" placeholder="Name" value="<%= (flashMessages.oldName) ? flashMessages.oldName : ''; %>" required>
                       </div>
                       <div class="form-group">
-                        <label for="_remail">Email</label>
-                        <input type="email" name="user_email" id="_remail" class="form-control" placeholder="Email" value="<%= (flashMessages.oldData) ? flashMessages.oldEmail : ''; %>" required>
+                        <label for="remail">Email</label>
+                        <input type="email" name="userEmail" id="remail" class="form-control" placeholder="Email" value="<%= (flashMessages.oldEmail) ? flashMessages.oldEmail : ''; %>" required>
                       </div>
                       <div class="form-group">
-                        <label for="_rpass">Password</label>
-                        <input type="password" name="user_pass" id="_rpass" class="form-control" placeholder="Password" minlength="6" required>
+                        <label for="rpass">Password</label>
+                        <input type="password" name="userPass" id="rpass" class="form-control" placeholder="Password" minlength="6" required>
                       </div>
                       <div class="form-group">
-                        <label for="_crpass">Confirm Password</label>
-                        <input type="password" name="user_cpass" id="_crpass" class="form-control" placeholder="Confirm Password" minlength="6" required>
+                        <label for="rcpass">Confirm Password</label>
+                        <input type="password" name="userCPass" id="rcpass" class="form-control" placeholder="Confirm Password" minlength="6" required>
                       </div>
                       <% if (flashMessages) {
                           if (flashMessages.registerErrors) {
-                            flashMessages.registerErrors.forEach(function(error_msg){ %>
-                            <div class="alert alert-danger" role="alert"><%= error_msg %></div>
+                            flashMessages.registerErrors.forEach(function(errorMsg){ %>
+                            <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
                         <% });
                       }}%>
                         <button type="submit" class="btn btn-success col-sm">Sign Up</button>

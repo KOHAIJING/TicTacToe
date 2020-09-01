@@ -27,20 +27,20 @@ async register(req, res){
 async loginUser(req, res){
   try{
     //DATA VALIDATION (USING EXPRESS-VALIDATOR)
-    await check('user_email', 'Invalid email address format!').isEmail().run(req);
-    await check('user_pass', 'The password must be of minimum length 6 characters!').isLength({ min: 6 }).run(req);
-    const validation_result = validationResult(req);
-    const {user_email, user_pass} = req.body;
-    //IF VALIDATION_RESULT HAS NO ERROR
-    if (validation_result.isEmpty()) {
+    await check('userEmail', 'Invalid email address format!').isEmail().run(req);
+    await check('userPass', 'The password must be of minimum length 6 characters!').isLength({ min: 6 }).run(req);
+    const validResult = validationResult(req);
+    const {userEmail, userPass} = req.body;
+    //IF VALIDRESULT HAS NO ERROR
+    if (validResult.isEmpty()) {
       //CHECK WHETHER EMAIL REGISTERED IS MATCH OR NOT
-      const [result] = await mysql.execute(query.searchUser, [user_email]);
+      const [result] = await mysql.execute(query.searchUser, [userEmail]);
       if(result.length <= 0){
         await req.flash('loginErrors', 'Invalid Email Address!');
         return res.redirect('/login');
       }
       //CHECK WHETHER PASSWORD REGISTERED IS MATCH OR NOT
-      const bool = await bcrypt.compare(user_pass, result[0].password);
+      const bool = await bcrypt.compare(userPass, result[0].password);
       if(!bool){
         await req.flash('loginErrors', 'Invalid Password!');
         return res.redirect('/login');
@@ -53,7 +53,7 @@ async loginUser(req, res){
     }
     else{
       //REDERING LOGIN PAGE WITH LOGIN VALIDATION ERRORS
-      const allErrors = validation_result.errors.map((error) => error.msg);
+      const allErrors = validResult.errors.map((error) => error.msg);
       await req.flash('loginErrors',allErrors);
       return res.redirect('/login');
     }
@@ -70,39 +70,43 @@ async loginUser(req, res){
 async registerUser(req, res){
   try{
     //DATA VALIDATION (USING EXPRESS-VALIDATOR)
-    await check('user_email', 'Invalid email address format!').isEmail().run(req);
-    await check('user_name', 'Name is Empty!').trim().not().isEmpty().run(req);
-    await check('user_pass', 'The password must be of minimum length 6 characters!').isLength({ min: 6 }).run(req);
-    await check('user_cpass', 'The confirm password must be same with the password!').trim()
-    .custom((value, { req }) => value === req.body.user_pass).run(req);
-    const validation_result = validationResult(req);
-    const {user_name, user_pass, user_email, user_cpass} = req.body;
-    //IF VALIDATION_RESULT HAS NO ERROR
-    if (validation_result.isEmpty()) {
+    await check('userEmail', 'Invalid email address format!').isEmail().run(req);
+    await check('userName', 'Name is Empty!').trim().not().isEmpty().run(req);
+    await check('userPass', 'The password must be of minimum length 6 characters!').isLength({ min: 6 }).run(req);
+    await check('userCPass', 'The confirm password must be same with the password!').trim()
+    .custom((value, { req }) => value === req.body.userPass).run(req);
+    const validResult = validationResult(req);
+    const {userName, userPass, userEmail, userCPass} = req.body;
+    //IF VALIDRESULT HAS NO ERROR
+    if (validResult.isEmpty()) {
       //CHECK WHETHER EMAIL HAS BEEN REGISTERED
-      const [result] = await mysql.execute(query.searchUser, [user_email]);
+      const [result] = await mysql.execute(query.searchUser, [userEmail]);
       if(result.length > 0){
         await req.flash('registerErrors', 'This E-mail already in use!');
+        await req.flash('oldName', userName);
+        await req.flash('oldEmail', userEmail);
         return res.redirect('/register');
       }
       //PASSWORD ENCRYPTION
-      const hash_pass = await new Promise((resolve, reject) => {
-          bcrypt.hash(user_pass, 12, function(err, hash) {
+      const hashPass = await new Promise((resolve, reject) => {
+          bcrypt.hash(userPass, 12, function(err, hash) {
             if (err) reject(err)
             resolve(hash)
           });
         });
       //INSERTING USER INTO DATABASE
-      const doneInsertData = await mysql.execute(query.insertUser, [user_name, user_email, hash_pass]);
+      const doneInsertData = await mysql.execute(query.insertUser, [userName, userEmail, hashPass]);
       if(doneInsertData){
-        await req.flash('success', `${user_name}'s account created successfully!`);
+        await req.flash('success', `${userName}'s account created successfully!`);
         return res.redirect('/login');
       }
     }
     else{
       //REDERING REGISTER PAGE WITH REGISTER VALIDATION ERRORS
-      const allErrors = validation_result.errors.map((error) => error.msg);
+      const allErrors = validResult.errors.map((error) => error.msg);
       await req.flash('registerErrors',allErrors);
+      await req.flash('oldName', userName);
+      await req.flash('oldEmail', userEmail);
       return res.redirect('/register');
     }
   }
@@ -110,6 +114,8 @@ async registerUser(req, res){
     //REDERING REGISTER PAGE WITH REGISTER ERRORS
     console.log(error);
     await req.flash('registerErrors', 'Register: Something went wrong! Internal server error!');
+    await req.flash('oldName', userName);
+    await req.flash('oldEmail', userEmail);
     return res.redirect('/register');
   }
 }
