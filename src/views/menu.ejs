@@ -1,0 +1,101 @@
+<!-- Only logged-in users can access this view. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tic Tac Toe - Home</title>
+    <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+    <style type='text/css'>
+      body {
+        background-image: url('https://ak.picdn.net/shutterstock/videos/21184336/thumb/1.jpg');
+        background-size: 100%;
+      }
+      /* TOP BAR*/
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #3A5795;
+      }
+      li {
+        float: right;
+      }
+      li a {
+        display: block !important;
+        color: white !important;
+        text-align: center !important;
+        padding: 14px 16px !important;
+        text-decoration: none !important;
+      }
+      li a:hover {
+        background-color: #111;
+      }
+      /* MESSAGE SESSION */
+      #message {
+        font-size: 2rem;
+        margin: 10px auto;
+        text-align: center;
+      }
+      /* BUTTON SESSION */
+      .container {
+        margin: auto;
+        margin-top: 20px;
+        width: 70%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container a {
+        font-size: 2em;
+        color: black;
+        width: 300px;
+        margin-bottom: 20px;
+        margin-left: 20px;
+        margin-right: 20px;
+      }
+      .container a:hover {
+        color: blue;
+      }
+      .container img {
+        width: 200px;
+        height: 200px;
+        margin: auto;
+      }
+    </style>
+</head>
+<body>
+
+  <ul>
+      <li style='float: left;'><a href='/menu'>TIC TAC TOE</a></li>
+      <li><a href='/api/logout' data-toggle='tooltip' data-placement='bottom' title='Logout'>
+        <i class='fa fa-sign-out' style='color: white; font-size: 20px;'></i>
+      </a></li>
+  </ul>
+
+  <div id='message'>Hello, <b style='color:blue'><%= name %></b>! </div>
+
+  <div class='container p-5'>
+    <div class="row">
+      <a id="gameButton" style="background-color:#FFF0F5;" href="/game" class="btn col-sm">
+        Play Game
+        <img src="https://miro.medium.com/max/300/1*kdY26OPGZbeNKJs60q0zUg.png" alt="Game Button Image">
+      </a>
+      <a id="scoreButton" style="background-color:#E6E6FA;" href="" class="btn col-sm">
+        View Score Board
+        <img src="https://i.pinimg.com/originals/ba/8b/fd/ba8bfdbe80cc37713774c525ad0c47c0.png" alt="Game Button Image">
+      </a>
+    </div>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js'></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

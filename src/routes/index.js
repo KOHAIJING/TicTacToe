@@ -17,6 +17,7 @@ router.get('/register', ifLoggedin, (req, res, next) => authController.register(
 
 //AFTER LOGIN
 router.use(ifNotLoggedin);
-router.get('/home', (req, res, next) => homeController.home(req, res, next));
+router.get('/menu', (req, res, next) => homeController.menu(req, res, next));
+router.get('/game', (req, res, next) => homeController.game(req, res, next));
 
 module.exports = router;

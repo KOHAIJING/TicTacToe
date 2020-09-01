@@ -1,6 +1,11 @@
 class Home {
-  home(req, res) {
-    return res.render('home', { name: req.session.name });
+
+  menu(req, res) {
+    return res.render('menu', { name: req.session.name });
+  }
+
+  game(req, res) {
+    return res.render('game', { name: req.session.name });
   }
 }
 

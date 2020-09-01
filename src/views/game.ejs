@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Tic Tac Toe - Home</title>
+    <title>Tic Tac Toe - Game</title>
     <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
     <style type='text/css'>
@@ -35,6 +35,12 @@
       li a:hover {
         background-color: #111;
       }
+      /* MESSAGE SESSION */
+      #message {
+        font-size: 2rem;
+        margin: 10px auto;
+        text-align: center;
+      }
       /* GAME SESSION */
       .board {
         margin: auto;
@@ -47,11 +53,6 @@
         margin: 5px;
         font-size: 3em;
       }
-      #message {
-        font-size: 2rem;
-        margin: 10px auto;
-        text-align: center;
-      }
     </style>
 </head>
 <body>
@@ -62,7 +63,7 @@
       </a></li>
     </ul>
 
-    <div id='message'>Hello, <b style='color:blue'><%= name %></b>! Waiting for an opponent...</div>
+    <div id='message'>Waiting for an opponent...</div>
 
     <div class='board'>
       <button id='r0c0'></button> <button id='r0c1'></button> <button id='r0c2'></button>

@@ -49,7 +49,7 @@ async loginUser(req, res){
       req.session.isLoggedIn = true;
       req.session.name = result[0].name;
       //req.session.save();
-      return res.redirect('/home');
+      return res.redirect('/menu');
     }
     else{
       //REDERING LOGIN PAGE WITH LOGIN VALIDATION ERRORS

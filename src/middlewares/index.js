@@ -16,7 +16,7 @@ exports.ifNotLoggedin = async (req, res, next) => {
 exports.ifLoggedin = (req, res, next) => {
   try {
     if (req.session.isLoggedIn) {
-      return res.redirect('/home');
+      return res.redirect('/menu');
     }
     next();
   } catch (error) {
