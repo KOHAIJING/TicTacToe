@@ -255,7 +255,15 @@
           }
           $(".board button").attr("disabled", true);
           setTimeout(() => {
-            if (window.confirm('Play again?')) location.reload();
+            if (window.confirm('Rechallenge current opponent?')) {
+
+            }
+            else if(window.confirm('Click OK to challenge with other opponent, Cancel to quit the game.')){
+                location.reload();
+            }
+            else{
+              location.replace('/menu');
+            }
           }, 3000);
         }
       });
