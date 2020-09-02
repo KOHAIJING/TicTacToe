@@ -41,6 +41,32 @@ class Socket {
           });
         }
 
+
+//REQUEST RECHALLENGE (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'request.rechallenge')
+        //SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'rechallenge.request'
+        //AND PASS REQUEST MSG TO OPPONENT
+        socket.on('request.rechallenge', (reqMessage) => {
+          let sameOpponent = this.opponentOf(socket);
+          sameOpponent.emit('rechallenge.request',reqMessage);
+        });
+
+//CONFIRM RECHALLENGE WITH SAME OPPONENT, RESTART GAME (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'restart.game')
+        socket.on('restart.game', (reqMessage) => {
+          let sameOpponent = this.opponentOf(socket);
+          //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'game.begin'
+          //AND PASS CURRENT CLIENT'S SYMBOL AND OPPONENT'S NAME TO CURRENT CLIENT
+          socket.emit('game.begin', {
+            symbol: this.players[id].symbol,
+            opponentName: this.players[sameOpponent.id].name,
+          });
+          //SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'game.begin'
+          //AND PASS OPPONENT'S SYMBOL AND CURRENT CLIENT'S NAME TO OPPONENT
+          sameOpponent.emit('game.begin', {
+            symbol: this.players[sameOpponent.id].symbol,
+            opponentName: this.players[id].name,
+          });
+        });
+
 //WHEN PLAYER MAKE ACTION (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'make.move')
         socket.on('make.move', (data) => {
           //CALLING FUNCTION: RETURN OPPONENT SOCKET ID OR RETURN NULL MEANS NO OPPONENT:
