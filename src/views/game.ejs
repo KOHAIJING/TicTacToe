@@ -332,7 +332,7 @@
       //WHERE symbol SET TO X, myTurn SET TO true, IF THE RECEIVED SYMBOL is X
       //symbol SET TO O, myTurn SET TO false, IF THE RECEIVED SYMBOL is O
       //MEANS THE GAME WILL BEGIN FROM PLAYER WITH SYMBOL X SINCE myTurn SET TO true IN THE BEGINNING
-      //WHEN RESTART GAME, HIDE THE MODAL MESSAGE, SET ALL CELLS' TEXT TO NONE AND ENABLE BOARD
+      //WHEN RESTART GAME, HIDE THE MODAL MESSAGE AND SET ALL CELLS' TEXT TO NONE
       socket.on('game.begin', ({ symbol: symbolSign, opponentName }) => {
         symbol = symbolSign;
         myTurn = symbol === 'X';
@@ -341,7 +341,6 @@
         $('.board button').each(function() {
            $(this).html(`<text></text>`);
         });
-        $('.board button').removeAttr('disabled');
       });
 
       //RECEIVE FROM OPPONENT'S SOCKET, EVENT NAME 'rechallenge.request'
