@@ -15,8 +15,7 @@ class Socket {
         //CONSOLE DISPLAY SOCKET NAME AND ID
         const { id } = socket;
         const { clientId, name } = socket.handshake.query;
-        console.log("exist:", this.clients.includes(clientId));
-
+        //IF clients HAS NOT THE CLIENT ID, MEANS THE CLIENT'S ACCOUNT JUST CONNECT TO A SOCKET ONLY
         if(!this.clients.includes(clientId)){
           console.log(`New client connected. Client ID:${clientId}   Client Name: ${name}   Socket ID: ${id}`);
           // STORE THE CURRENT CLIENT'S ID TO 'clients'
@@ -110,6 +109,7 @@ class Socket {
           });
 
         }
+        //IF clients HAS THE CLIENT ID, MEANS THE CLIENT'S ACCOUNT HAD CONNECTED TO A SOCKET, CANNOT CREATE ONE MORE SOCKET
         else{
           console.log(`${name}'s socket authenticated.`);
           socket = null;
