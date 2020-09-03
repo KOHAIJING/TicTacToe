@@ -78,7 +78,7 @@
         margin: auto;
         padding: 0;
         border: 1px solid #888;
-        margin-top:20px;
+        margin-top:50px;
         width: 40%;
         box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
         -webkit-animation-name: animatetop;
@@ -183,9 +183,9 @@
         $('[data-toggle=\'tooltip\']').tooltip();
       });
 
-      //CONNECT TO SOCKET AND GET USER NAME WHICH STORED IN SESSION (PASS FROM HOME CONTROLLER)
+      //CONNECT TO SOCKET, GET USER ID AND NAME WHICH STORED IN SESSION (PASS FROM HOME CONTROLLER)
       const url = window.location.origin;
-      const socket = io.connect( `${url}?name=${<%- JSON.stringify(name) %>}`);
+      const socket = io.connect( `${url}?clientId=${<%- JSON.stringify(clientId) %>}&name=${<%- JSON.stringify(name) %>}`);
 
       //WHEN USER CLICK RECHALLENGE BUTTON,
       //SEND TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'request.rechallenge'

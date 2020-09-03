@@ -5,7 +5,7 @@ class Home {
   }
 
   game(req, res) {
-    return res.render('game', { name: req.session.name });
+    return res.render('game', { clientId: req.session.id, name: req.session.name });
   }
 }
 

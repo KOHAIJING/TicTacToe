@@ -47,8 +47,9 @@ async loginUser(req, res){
       }
       //SET LOGIN SESSION AND REDERING HOME PAGE
       req.session.isLoggedIn = true;
+      req.session.id = result[0].id;
       req.session.name = result[0].name;
-      //req.session.save();
+      req.session.save();
       return res.redirect('/menu');
     }
     else{
