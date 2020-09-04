@@ -1,4 +1,4 @@
-<!-- Only logged-in users can access this view. -->
+<!-- When logged-in users clicked to play game. -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -54,7 +54,7 @@
         font-size: 3em;
       }
 
-      /* The Modal (background) */
+      /* MODAL BACKGROUND */
       .modal {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
@@ -71,7 +71,7 @@
         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
       }
 
-      /* Modal Content */
+      /* MODAL CONTENT */
       .modal-content {
         position: relative;
         background-color: #fefefe;
@@ -79,7 +79,7 @@
         padding: 0;
         border: 1px solid #888;
         margin-top:50px;
-        width: 40%;
+        width: 50%;
         box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
         -webkit-animation-name: animatetop;
         -webkit-animation-duration: 0.4s;
@@ -92,7 +92,7 @@
         color: white;
       }
       .modal-body {
-        padding: 20px 20px;
+        padding: 30px 30px;
         text-align: center;
         font-size: 1em;
       }
@@ -104,7 +104,8 @@
       .modal-body button:hover{
         font-weight: bold;
       }
-      /* The Close Button */
+
+      /* MODAL CLOSE BUTTON */
       .close {
         color: white;
         float: right;
@@ -117,7 +118,8 @@
         text-decoration: none;
         cursor: pointer;
       }
-      /* Add Animation */
+
+      /* MODAL ANIMATION */
       @-webkit-keyframes animatetop {
         from {top:-300px; opacity:0}
         to {top:0; opacity:1}
@@ -125,6 +127,14 @@
       @keyframes animatetop {
         from {top:-300px; opacity:0}
         to {top:0; opacity:1}
+      }
+
+      /* MODAL TABLE */
+      .table{
+        margin:0 10%;
+      }
+      .table tr{
+        text-align: left;
       }
     </style>
 </head>
@@ -144,6 +154,8 @@
       <button id="r2c0"></button> <button id="r2c1"></button> <button id="r2c2"></button>
     </div>
 
+    <!-- <button onclick="document.getElementById('myModal').style.display = 'block';">Open Modal</button> -->
+
     <!-- MODAL DISPLAY WHEN GAME END -->
     <div id="myModal" class="modal">
       <div class="modal-content">
@@ -152,13 +164,30 @@
           <span class="close">&times;</span>
         </div>
         <div class="modal-body">
-          <h5>Rank: <b>1</b> </h5>
+          <table class="table table-borderless">
+            <tbody>
+              <!-- <%
+              let opponent = '';
+              let updateResult = '';
+              let updatePlayed = 0;
+              let updateWin = 0;
+              let updatePercentage = 0;
+              %> -->
+              <tr> <td style="width:40%">Your Name: </td> <td style="width:60%; color:blue;"><%= name %></td> </tr>
+              <tr> <td style="width:40%">Opponent Name: </td> <td style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Result: </td> <td style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Percentage: </td> <td style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Total Win: </td> <td style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Total Played: </td> <td style="width:60%; color:blue;"></td> </tr>
+              <!-- <tr> <td style="width:40%">Opponent Name: </td> <td style="width:60%; color:blue;"><%= opponent ? opponent : '-' %></td> </tr>
+              <tr> <td style="width:40%">Your Result: </td> <td style="width:60%; color:blue;"><%= updateResult ? updateResult : '-' %></td> </tr>
+              <tr> <td style="width:40%">Your Percentage: </td> <td style="width:60%; color:blue;"><%= updatePlayed ? updatePlayed : '0' %> %</td> </tr>
+              <tr> <td style="width:40%">Your Total Win: </td> <td style="width:60%; color:blue;"><%= updateWin ? updateWin : '0' %></td> </tr>
+              <tr> <td style="width:40%">Your Total Played: </td> <td style="width:60%; color:blue;"><%= updatePercentage ? updatePercentage : '0' %></td> </tr> -->
+            </tbody>
+          </table>
+          <div>
           <br>
-          <h5>Total Win: <b>9</b> </h5>
-          <h5>Total Lose: <b>1</b> </h5>
-          <h5>Total Played: <b>10</b> </h5>
-          <br>
-
           <button id="rechallenge" onclick="rechallengeFunction()">Rechallenge With Same Opponent</button>
           <button id="challengeOthers" onclick="location.reload();">Challenge With Other Opponent</button>
           <button id="quitGame" onclick="location.replace('/menu');">Quit The Game Session</button>
@@ -363,25 +392,33 @@
       //IF RETURN TRUE, myTurn TRUE SIDE WILL LOSE, FALSE SIDE WILL WIN
       //THEN DISABLE BOARD AND DISPLAY MODAL MESSAGE
       socket.on('move.made', (data) => {
+        let opponentName = data.opponentName;
+        let result = '';
         $('#' + data.position).text(data.symbol);
         myTurn = data.symbol !== symbol;
         if (!isGameOver()) {
-          renderTurnMessage(data.opponentName);
-        } else {
+          renderTurnMessage(opponentName);
+        }
+        else {
           if(finish) {
-            $('#message').html(`<b style='color:blue'>Draw!</b>`);
+            result = 'DRAW';
+          }else if (myTurn) {
+            result = 'LOSE';
+          }else {
+            result = 'WIN';
           }
-          else{
-            if (myTurn) {
-              $('#message').html(`You <b style='color:blue'>lose</b>!`);
-            } else {
-              $('#message').html(`You <b style='color:blue'>win</b>!`);
-            }
-          }
+          $('#message').html(`You <b style='color:blue'>${result}</b>!`);
+          // socket.emit('game.over', {opponentName, result});
+          // socket.on('score.inserted', (played, win, percentage) => {
+          //   updatePlayed = played;
+          //   updateWin = win;
+          //   updatePercentage = percentage;
+          // });
           $('.board button').attr('disabled', true);
           setTimeout(() => {
             document.getElementById('myModal').style.display = 'block';
-          }, 3000);}
+          }, 3000);
+        }
         });
 
       //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'opponent.left'

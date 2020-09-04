@@ -1,4 +1,4 @@
-<!-- A user can log in or sign up here. -->
+<!-- A user can sign up here. -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +36,7 @@
               <form action="/api/register" method="POST">
                       <div class="form-group">
                         <label for="rname">Name</label>
-                        <input type="text" name="userName" id="rname" class="form-control" placeholder="Name" value="<%= (flashMessages.oldName) ? flashMessages.oldName : ''; %>" required>
+                        <input type="text" name="userName" id="rname" class="form-control" placeholder="Name" value="<%= (flashMessages.oldName) ? flashMessages.oldName : ''; %>" maxlength="15" required>
                       </div>
                       <div class="form-group">
                         <label for="remail">Email</label>

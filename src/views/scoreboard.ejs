@@ -1,0 +1,118 @@
+<!-- When logged-in users clicked to view scoreboard. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tic Tac Toe - View Score Board</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+    <style type="text/css">
+		body {
+      background-image: url('https://ak.picdn.net/shutterstock/videos/21184336/thumb/1.jpg');
+      background-size: 100%;
+    }
+    /* TOP BAR*/
+    ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #3A5795;
+    }
+    li {
+      float: right;
+    }
+    li a {
+      display: block !important;
+      color: white !important;
+      text-align: center !important;
+      padding: 14px 16px !important;
+      text-decoration: none !important;
+    }
+    li a:hover {
+      background-color: #111;
+    }
+
+
+    .alert{
+      text-align: center;
+    }
+    .box{
+      margin: auto;
+    }
+    #backButton, .btn{
+     margin-top:5%;
+   }
+   /* SCOREBOARD TABLE */
+  .table_scoreboard thead{
+    background-color: lightblue;
+  }
+  .table_scoreboard {
+    table-layout: fixed;
+  }
+  .table_scoreboard tr {
+    overflow-wrap: break-word;
+  }
+		</style>
+</head>
+<body>
+  <ul>
+      <li style='float: left;'><a href='/menu'>TIC TAC TOE</a></li>
+      <li><a href='/api/logout' data-toggle='tooltip' data-placement='bottom' title='Logout'>
+        <i class='fa fa-sign-out' style='color: white; font-size: 20px;'></i>
+      </a></li>
+  </ul>
+  <% if (flashMessages) { %>
+    <% if (flashMessages.showScoreErrors) {
+          flashMessages.showScoreErrors.forEach(function(errorMsg){ %>
+              <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
+  <% });
+  }} %>
+  <div class="container p-5">
+      <h1 class="text-center mb-5 text-uppercase">Score Board</h1>
+      <div class="row">
+          <div class="box col-sm-5 bg-light border rounded py-3">
+              <table class="table table-borderless">
+                <tbody>
+                  <tr> <td style="width:40%;">Name: </td> <td style="width:60%; color:blue;"><%= userResult[0].name %></td> </tr>
+                  <tr> <td style="width:40%;">Percentage: </td> <td style="width:60%; color:blue;"><%= userResult[0].percentage %> %</td> </tr>
+                  <tr> <td style="width:40%;">Total Win: </td> <td style="width:60%; color:blue;"><%= userResult[0].total_win %></td> </tr>
+                  <tr> <td style="width:40%;">Total Played: </td> <td style="width:60%; color:blue;"><%= userResult[0].total_played %></td> </tr>
+                </tbody>
+              </table>
+              <br>
+              <table class="table table_scoreboard table-striped text-center">
+                <thead>
+                  <tr> <th style="width:15%">Rank</th> <th style="width:45%">Name</th> <th style="width:40%">Percentage</th> </tr>
+                </thead>
+                <tbody>
+                  <% if(allUserResult.length == 0) { %>
+                    <tr> <td colspan="3">--- no record ---</td> </tr>
+                  <% }
+                  else{
+                    let counter = 0;
+                    allUserResult.forEach(result => {
+                      counter++;
+                      if(result.name == userResult[0].name){ %>
+                    <tr style="font-weight:bold;"> <td><%= counter %></td> <td><%= result.name %></td> <td><%= result.percentage %> %</td> </tr>
+                    <%} else{ %>
+                    <tr> <td><%= counter %></td> <td><%= result.name %></td> <td><%= result.percentage %> %</td> </tr>
+                    <%}
+                    });
+                  }%>
+                </tbody>
+              </table>
+              <a id="backButton" href="/menu" class="btn btn-success col-sm">Back</a>
+          </div>
+      </div>
+  </div>
+    <script>
+    //console.log(result[0].name)
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

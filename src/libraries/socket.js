@@ -1,3 +1,6 @@
+const mysql = AppRoot('/src/config/database');
+const query = AppRoot('/src/config/query');
+
 class Socket {
 
   constructor(socket) {
@@ -85,6 +88,25 @@ class Socket {
             //AND PASS THE data TO OPPONENT
             opponent.emit('move.made', data);
           });
+
+//WHEN GAME OVER  (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'game.over')
+           //  socket.on('game.over', (opponentName, result) => {
+           //    const [userResult] = mysql.execute(query.searchUserScore, [id]);
+           //    if(userResult.length == 1){
+           //      let played = userResult[0].total_played;
+           //      let win = userResult[0].total_win;
+           //      played++;
+           //      if(result === 'WIN'){
+           //        win++;
+           //      }
+           //      let percentage = Math.round(win/played);
+           //      const doneInsertData = mysql.execute(query.insertUserScore, [played, win, percentage, id]);
+           //
+           //      if(doneInsertData){
+           //          socket.emit('score.inserted', {played, win, percentage});
+           //      }
+           //    }
+           // });
 
 //DISCONNECTED (WHEN CLIENT DISCONNECT, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'disconnect')
           socket.on('disconnect', () => {
