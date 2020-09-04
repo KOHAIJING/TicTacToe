@@ -1,3 +1,4 @@
+// IMPORT CONFIG
 const mysql = AppRoot('/src/config/database');
 const query = AppRoot('/src/config/query');
 
@@ -90,23 +91,32 @@ class Socket {
           });
 
 //WHEN GAME OVER  (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'game.over')
-           //  socket.on('game.over', (opponentName, result) => {
-           //    const [userResult] = mysql.execute(query.searchUserScore, [id]);
-           //    if(userResult.length == 1){
-           //      let played = userResult[0].total_played;
-           //      let win = userResult[0].total_win;
-           //      played++;
-           //      if(result === 'WIN'){
-           //        win++;
-           //      }
-           //      let percentage = Math.round(win/played);
-           //      const doneInsertData = mysql.execute(query.insertUserScore, [played, win, percentage, id]);
-           //
-           //      if(doneInsertData){
-           //          socket.emit('score.inserted', {played, win, percentage});
-           //      }
-           //    }
-           // });
+            //GET GAME RESULT AND RUN QUERY TO UPDATE USER SCORE
+            //CALCULATION: total_played PLUS ONE AND IF THE PLAYER WIN, total_win PLUS ONE
+            //IF UPDATE SUCCESSFULLY, SEND TO THE CURRENT CLIENT'S SOCKET, THE CURRENT CLIENT EVENT NAME 'score.inserted'
+            //AND PASS THE SCORE DATA TO CURRENT CLIENT'S SOCKET
+            socket.on('game.over', async (gameResult) => {
+              const opponent = this.opponentOf(socket);
+              let opponentName = '';
+              if(opponent)
+                opponentName = this.players[opponent.id].name;
+              const [userResult] =  await mysql.execute(query.searchUserScore, [this.players[id].clientId]);
+              if(userResult.length == 1){
+                let played = userResult[0].total_played;
+                let win = userResult[0].total_win;
+                let percentage = userResult[0].percentage;
+                if(gameResult.length > 0){
+                  played++;
+                  if(gameResult == 'WIN')
+                    win++;
+                  percentage = Math.round(win/played * 100);
+                  const doneInsertData = await mysql.execute(query.insertUserScore, [played, win, percentage, this.players[id].clientId]);
+                  socket.emit('score.inserted', {opponentName, gameResult, played, win, percentage});
+                }
+                else
+                  socket.emit('score.noupdate', {played, win, percentage});
+              }
+           });
 
 //DISCONNECTED (WHEN CLIENT DISCONNECT, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'disconnect')
           socket.on('disconnect', () => {

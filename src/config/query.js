@@ -52,8 +52,7 @@ WHERE id = ?;
 
 exports.insertUserScore = `
 UPDATE users
-SET total_played = ?, total_win = ?, percentage = ?
-WHERE id = ?;
+SET total_played = ?, total_win = ?, percentage = ? WHERE id = ?;
 `;
 
 exports.searchAllUserScore = `

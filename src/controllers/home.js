@@ -17,7 +17,6 @@ class Home {
     try{
       const [userResult] = await mysql.execute(query.searchUserScore, [req.session.id]);
       const [allUserResult] = await mysql.execute(query.searchAllUserScore);
-      console.log(allUserResult.length);
       if(userResult.length == 1){
         return res.render('scoreboard', { userResult: userResult, allUserResult: allUserResult});
       }

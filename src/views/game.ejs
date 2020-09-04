@@ -154,7 +154,7 @@
       <button id="r2c0"></button> <button id="r2c1"></button> <button id="r2c2"></button>
     </div>
 
-    <!-- <button onclick="document.getElementById('myModal').style.display = 'block';">Open Modal</button> -->
+    <button onclick="document.getElementById('myModal').style.display = 'block';">Open Modal</button>
 
     <!-- MODAL DISPLAY WHEN GAME END -->
     <div id="myModal" class="modal">
@@ -166,24 +166,12 @@
         <div class="modal-body">
           <table class="table table-borderless">
             <tbody>
-              <!-- <%
-              let opponent = '';
-              let updateResult = '';
-              let updatePlayed = 0;
-              let updateWin = 0;
-              let updatePercentage = 0;
-              %> -->
               <tr> <td style="width:40%">Your Name: </td> <td style="width:60%; color:blue;"><%= name %></td> </tr>
-              <tr> <td style="width:40%">Opponent Name: </td> <td style="width:60%; color:blue;"></td> </tr>
-              <tr> <td style="width:40%">Your Result: </td> <td style="width:60%; color:blue;"></td> </tr>
-              <tr> <td style="width:40%">Your Percentage: </td> <td style="width:60%; color:blue;"></td> </tr>
-              <tr> <td style="width:40%">Your Total Win: </td> <td style="width:60%; color:blue;"></td> </tr>
-              <tr> <td style="width:40%">Your Total Played: </td> <td style="width:60%; color:blue;"></td> </tr>
-              <!-- <tr> <td style="width:40%">Opponent Name: </td> <td style="width:60%; color:blue;"><%= opponent ? opponent : '-' %></td> </tr>
-              <tr> <td style="width:40%">Your Result: </td> <td style="width:60%; color:blue;"><%= updateResult ? updateResult : '-' %></td> </tr>
-              <tr> <td style="width:40%">Your Percentage: </td> <td style="width:60%; color:blue;"><%= updatePlayed ? updatePlayed : '0' %> %</td> </tr>
-              <tr> <td style="width:40%">Your Total Win: </td> <td style="width:60%; color:blue;"><%= updateWin ? updateWin : '0' %></td> </tr>
-              <tr> <td style="width:40%">Your Total Played: </td> <td style="width:60%; color:blue;"><%= updatePercentage ? updatePercentage : '0' %></td> </tr> -->
+              <tr> <td style="width:40%">Opponent Name: </td> <td id="displayOpponentName" style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Result: </td> <td id="displayResult" style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Percentage: </td> <td id="displayPercentage" style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Total Win: </td> <td id="displayTotalWin" style="width:60%; color:blue;"></td> </tr>
+              <tr> <td style="width:40%">Your Total Played: </td> <td id="displayTotalPlayed" style="width:60%; color:blue;"></td> </tr>
             </tbody>
           </table>
           <div>
@@ -393,7 +381,7 @@
       //THEN DISABLE BOARD AND DISPLAY MODAL MESSAGE
       socket.on('move.made', (data) => {
         let opponentName = data.opponentName;
-        let result = '';
+        let gameResult = '';
         $('#' + data.position).text(data.symbol);
         myTurn = data.symbol !== symbol;
         if (!isGameOver()) {
@@ -401,19 +389,21 @@
         }
         else {
           if(finish) {
-            result = 'DRAW';
+            gameResult = 'DRAW';
           }else if (myTurn) {
-            result = 'LOSE';
+            gameResult = 'LOSE';
           }else {
-            result = 'WIN';
+            gameResult = 'WIN';
           }
-          $('#message').html(`You <b style='color:blue'>${result}</b>!`);
-          // socket.emit('game.over', {opponentName, result});
-          // socket.on('score.inserted', (played, win, percentage) => {
-          //   updatePlayed = played;
-          //   updateWin = win;
-          //   updatePercentage = percentage;
-          // });
+          $('#message').html(`You <b style='color:blue'>${gameResult}</b>!`);
+          socket.emit('game.over', gameResult);
+          socket.on('score.inserted', (score) => {
+            $('#displayOpponentName').html(`${score.opponentName}`);
+            $('#displayResult').html(`${score.gameResult}`);
+            $('#displayPercentage').html(`${score.percentage} %`);
+            $('#displayTotalWin').html(`${score.win}`);
+            $('#displayTotalPlayed').html(`${score.played}`);
+          });
           $('.board button').attr('disabled', true);
           setTimeout(() => {
             document.getElementById('myModal').style.display = 'block';
@@ -425,6 +415,15 @@
       //AND DISPLAY MODAL MESSAGE, HIDDEN RECHALLENGE OPTION AND DISABLE THE BOARD
       socket.on('opponent.left', ({ opponentName }) => {
         $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b> left the game`);
+        let gameResult = '';
+        socket.emit('game.over', gameResult);
+        socket.on('score.noupdate', (score) => {
+          $('#displayOpponentName').html(`--- Opponent Leave ---`);
+          $('#displayResult').html(`-`);
+          $('#displayPercentage').html(`${score.percentage} %`);
+          $('#displayTotalWin').html(`${score.win}`);
+          $('#displayTotalPlayed').html(`${score.played}`);
+        });
         document.getElementById('myModal').style.display = 'block';
         $('#rechallenge').attr('hidden', true);
         $('.board button').attr('disabled', true);
