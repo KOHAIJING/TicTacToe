@@ -96,10 +96,6 @@ class Socket {
             //IF UPDATE SUCCESSFULLY, SEND TO THE CURRENT CLIENT'S SOCKET, THE CURRENT CLIENT EVENT NAME 'score.inserted'
             //AND PASS THE SCORE DATA TO CURRENT CLIENT'S SOCKET
             socket.on('game.over', async (gameResult) => {
-              const opponent = this.opponentOf(socket);
-              let opponentName = '';
-              if(opponent)
-                opponentName = this.players[opponent.id].name;
               const [userResult] =  await mysql.execute(query.searchUserScore, [this.players[id].clientId]);
               if(userResult.length == 1){
                 let played = userResult[0].total_played;
@@ -110,8 +106,14 @@ class Socket {
                   if(gameResult == 'WIN')
                     win++;
                   percentage = Math.round(win/played * 100);
-                  const doneInsertData = await mysql.execute(query.insertUserScore, [played, win, percentage, this.players[id].clientId]);
-                  socket.emit('score.inserted', {opponentName, gameResult, played, win, percentage});
+                  const opponent = this.opponentOf(socket);
+                  let opponentName = '';
+                  if(opponent)
+                    opponentName = this.players[opponent.id].name;
+                  const doneInsertScore = await mysql.execute(query.insertScore, [this.players[id].clientId, this.players[opponent.id].clientId, gameResult]);
+                  const doneInsertUserScore = await mysql.execute(query.insertUserScore, [played, win, percentage, this.players[id].clientId]);
+                  if(doneInsertScore && doneInsertUserScore)
+                    socket.emit('score.inserted', {opponentName, gameResult, played, win, percentage});
                 }
                 else
                   socket.emit('score.noupdate', {played, win, percentage});

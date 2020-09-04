@@ -18,7 +18,7 @@ CREATE TABLE scores(
  user_id INT(10) UNSIGNED NOT NULL,
  opponent_id INT(10) UNSIGNED NOT NULL,
  result VARCHAR(50) NOT NULL,
- created_date DATETIME NOT NULL DEFAULT NOW(),
+ created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
  PRIMARY KEY (id),
  CONSTRAINT FK_user_id FOREIGN KEY (user_id) REFERENCES users (id),
  CONSTRAINT FK_opponent_id FOREIGN KEY (opponent_id) REFERENCES users (id)
