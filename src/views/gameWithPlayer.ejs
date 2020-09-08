@@ -76,7 +76,7 @@
         margin: auto;
         padding: 0;
         border: 1px solid #888;
-        margin-top:50px;
+        margin-top: 50px;
         width: 50%;
         box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
         -webkit-animation-name: animatetop;
@@ -89,12 +89,12 @@
         text-align: center;
         font-size: 1em;
       }
-      .modal-body button{
+      .modal-body button {
         color: black;
-        background-color:#ADD8E6;
+        background-color: #ADD8E6;
         margin-bottom: 5px;
       }
-      .modal-body button:hover{
+      .modal-body button:hover {
         font-weight: bold;
       }
       /* MODAL ANIMATION */
@@ -107,10 +107,10 @@
         to {top:0; opacity:1}
       }
       /* MODAL TABLE */
-      .table{
-        margin:0 10%;
+      .table {
+        margin: 0 10%;
       }
-      .table tr{
+      .table tr {
         text-align: left;
       }
     </style>
@@ -149,7 +149,7 @@
           <br>
           <button id="rechallenge" onclick="rechallengeFunction()">Rechallenge With Same Opponent</button>
           <button id="challengeOthers" onclick="location.reload();">Challenge With Other Opponent</button>
-          <button id="challengeAI" onclick="location.replace('/gameWithAI');">Challenge With AI</button>
+          <button id="challengeAI" onclick="location.replace('/gameWithAI');">Challenge With AI (Practice)</button>
           <button id="quitGame" onclick="location.replace('/menu');">Quit The Game Session</button>
         </div>
       </div>
@@ -170,7 +170,7 @@
       let gameResult = '';
 
       //LOGOUT TOOLTIP (WHEN MOUSE HOVER, DISPLAY THE LOGOUT LABEL WITH SPEECH BUBBLE LAYOUT)
-      $(document).ready(function(){
+      $(document).ready(function() {
         $('[data-toggle=\'tooltip\']').tooltip();
       });
 
@@ -182,7 +182,7 @@
       //SEND TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'request.rechallenge'
       //AND PASS CONFIRM MSG TO CURRENT CLIENT
       const rechallengeFunction = () => {
-        try{
+        try {
           let reqMessage = 'Your opponent request for rechallenge, accept?';
           socket.emit('request.rechallenge', reqMessage);
         } catch (error) {
@@ -227,16 +227,16 @@
           const obool = rows.includes('OOO');
           let count = 0;
           $('.board button').each(function() {
-            if($(this).text()!== '')
+            if ($(this).text()!== '')
               count ++;
           });
           match = xbool || obool;
           finish = count == 9 && !match;
 
           //IF MATCHED, CALLING highlightCells FUNCTION AND HIGHLIGHT THE WINNER'S 3 CELLS
-          if(match){
+          if (match) {
             let index = 0;
-            if(xbool)
+            if (xbool)
               index = rows.indexOf('XXX');
             else
               index = rows.indexOf('OOO');
@@ -263,9 +263,9 @@
             ['r0c0', 'r1c1', 'r2c2'],
             ['r0c2', 'r1c1', 'r2c0']
           ];
-          for(let i = 0; i < 3; i++){
+          for (let i = 0; i < 3; i++) {
             $('.board button').each(function() {
-              if($(this).attr('id') === rowId[index][i])
+              if ($(this).attr('id') === rowId[index][i])
                 $(this).html(`<text style='color:blue'>${$(this).text()}</text>`);
             });
           }
@@ -283,8 +283,9 @@
         try {
           if (!myTurn) return;
           if ($(this).text().length) return; //validate
-          socket.emit('make.move', {symbol, position,});
-        } catch (error) {
+          socket.emit('make.move', { symbol, position });
+        }
+        catch (error) {
           throw new Error(`MakeMove Error: ${error.message}`);
         }
       };
@@ -296,7 +297,8 @@
           if (!myTurn) {
             $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b>'s turn`);
             $('.board button').attr('disabled', true);
-          } else {
+          }
+          else {
             $('#message').text('Your turn');
             $('.board button').removeAttr('disabled');
             $('.board button').each(function() {
@@ -304,7 +306,8 @@
                 $(this).attr('disabled', true);
             });
           }
-        } catch (error) {
+        }
+        catch (error) {
           throw new Error(`RenderTurnMessage Error: ${error.message}`);
         }
       };
@@ -332,7 +335,7 @@
         $('.board button').each(function() {
            $(this).text('');
         });
-        if(myTurn)
+        if (myTurn)
           $('.board button').removeAttr('disabled');
       });
 
@@ -341,7 +344,7 @@
       //IF CONFIRM, SEND TO CURRENT CLIENT'S SOCKET, SOCKET'S EVENT NAME 'restart.game'
       //AND PASS REQUEST MSG TO CURRENT CLIENT
       socket.on('rechallenge.request', (reqMessage) => {
-        if(window.confirm(reqMessage)){
+        if (window.confirm(reqMessage)) {
           socket.emit('restart.game', reqMessage);
         }
       });
@@ -361,11 +364,11 @@
           renderTurnMessage(opponentName);
         }
         else {
-          if(finish) {
+          if (finish) {
             gameResult = 'DRAW';
-          }else if (myTurn) {
+          } else if (myTurn) {
             gameResult = 'LOSE';
-          }else {
+          } else {
             gameResult = 'WIN';
           }
           $('#message').html(`You <b style='color:blue'>${gameResult}</b>!`);
@@ -388,7 +391,7 @@
       //AND DISPLAY MODAL MESSAGE, HIDDEN RECHALLENGE OPTION AND DISABLE THE BOARD
       socket.on('opponent.left', ({ opponentName }) => {
         $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b> left the game`);
-        if(!match && !finish){
+        if (!match && !finish) {
           socket.emit('game.over', gameResult);
           socket.on('score.noupdate', (score) => {
             $('#displayOpponentName').html(`${opponentName} ( Your Opponent Left )`);
@@ -403,12 +406,6 @@
         $('#rechallenge').attr('hidden', true);
         $('.board button').attr('disabled', true);
       });
-
-      // MODAL CLOSE
-      var span = document.getElementsByClassName('close')[0];
-      span.onclick = function() {
-        document.getElementById('myModal').style.display = 'none';
-      }
 
     </script>
 

@@ -28,11 +28,11 @@ app.use(cookieParser('secret'));
 app.use(expressSession({
   cookie: { secure: process.env.APP_ENV === 'production', maxAge: 3600000 },
   store: new MemoryStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
+    checkPeriod: 86400000, // prune expired entries every 24h
   }),
   secret: 'secret_passcode',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
 }));
 app.use(connectFlash());
 app.use((req, res, next) => {

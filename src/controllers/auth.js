@@ -9,7 +9,7 @@ const query = AppRoot('/src/config/query');
 class Auth {
 
 //DIRECT TO LOGIN PAGE
-async login(req, res){
+async login(req, res) {
   return res.render('auth/login', {
     errors: await req.flash('error'),
     success: await req.flash('success'),
@@ -17,15 +17,15 @@ async login(req, res){
 }
 
 //DIRECT TO REGISTER PAGE
-async register(req, res){
+async register(req, res) {
   return res.render('auth/registration', {
-    errors: await req.flash('error')
+    errors: await req.flash('error'),
   });
 }
 
 //LOGIN
-async loginUser(req, res){
-  try{
+async loginUser(req, res) {
+  try {
     //DATA VALIDATION (USING EXPRESS-VALIDATOR)
     await check('userEmail', 'Invalid email address format!').isEmail().run(req);
     await check('userPass', 'The password must be of minimum length 6 characters!').isLength({ min: 6 }).run(req);
@@ -35,13 +35,13 @@ async loginUser(req, res){
     if (validResult.isEmpty()) {
       //CHECK WHETHER EMAIL REGISTERED IS MATCH OR NOT
       const [result] = await mysql.execute(query.searchUser, [userEmail]);
-      if(result.length <= 0){
+      if (result.length <= 0) {
         await req.flash('loginErrors', 'Invalid Email Address!');
         return res.redirect('/login');
       }
       //CHECK WHETHER PASSWORD REGISTERED IS MATCH OR NOT
       const bool = await bcrypt.compare(userPass, result[0].password);
-      if(!bool){
+      if (!bool) {
         await req.flash('loginErrors', 'Invalid Password!');
         return res.redirect('/login');
       }
@@ -52,14 +52,14 @@ async loginUser(req, res){
       req.session.save();
       return res.redirect('/menu');
     }
-    else{
+    else {
       //REDERING LOGIN PAGE WITH LOGIN VALIDATION ERRORS
       const allErrors = validResult.errors.map((error) => error.msg);
       await req.flash('loginErrors',allErrors);
       return res.redirect('/login');
     }
   }
-  catch(error){
+  catch (error) {
     //REDERING LOGIN PAGE WITH LOGIN ERRORS
     console.log(error);
     await req.flash('loginErrors', 'Login: Something went wrong! Internal server error!');
@@ -68,8 +68,8 @@ async loginUser(req, res){
 }
 
 //REGISTER
-async registerUser(req, res){
-  try{
+async registerUser(req, res) {
+  try {
     //DATA VALIDATION (USING EXPRESS-VALIDATOR)
     await check('userEmail', 'Invalid email address format!').isEmail().run(req);
     await check('userName', 'Name is Empty!').trim().not().isEmpty().run(req);
@@ -82,7 +82,7 @@ async registerUser(req, res){
     if (validResult.isEmpty()) {
       //CHECK WHETHER EMAIL HAS BEEN REGISTERED
       const [result] = await mysql.execute(query.searchUser, [userEmail]);
-      if(result.length > 0){
+      if (result.length > 0) {
         await req.flash('registerErrors', 'This E-mail already in use!');
         await req.flash('oldName', userName);
         await req.flash('oldEmail', userEmail);
@@ -91,18 +91,19 @@ async registerUser(req, res){
       //PASSWORD ENCRYPTION
       const hashPass = await new Promise((resolve, reject) => {
           bcrypt.hash(userPass, 12, function(err, hash) {
-            if (err) reject(err)
-            resolve(hash)
+            if (err)
+              reject(err);
+            resolve(hash);
           });
         });
       //INSERTING USER INTO DATABASE
       const doneInsertData = await mysql.execute(query.insertUser, [userName, userEmail, hashPass]);
-      if(doneInsertData){
+      if (doneInsertData) {
         await req.flash('success', `${userName}'s account created successfully!`);
         return res.redirect('/login');
       }
     }
-    else{
+    else {
       //REDERING REGISTER PAGE WITH REGISTER VALIDATION ERRORS
       const allErrors = validResult.errors.map((error) => error.msg);
       await req.flash('registerErrors',allErrors);
@@ -111,7 +112,7 @@ async registerUser(req, res){
       return res.redirect('/register');
     }
   }
-  catch(error){
+  catch (error) {
     //REDERING REGISTER PAGE WITH REGISTER ERRORS
     console.log(error);
     await req.flash('registerErrors', 'Register: Something went wrong! Internal server error!');
@@ -121,13 +122,13 @@ async registerUser(req, res){
   }
 }
 
-async logoutUser(req, res){
-  try{
+async logoutUser(req, res) {
+  try {
     //DESTROY SESSION
     req.session = null;
     return res.redirect('/login');
   }
-  catch(error){
+  catch (error) {
     //REDERING LOGIN PAGE WITH LOGOUT ERRORS
     await req.flash('logoutErrors', 'Logout: Something went wrong! Internal server error!');
     return res.redirect('/login');

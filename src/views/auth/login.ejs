@@ -13,28 +13,27 @@
       background-image: url('https://ak.picdn.net/shutterstock/videos/21184336/thumb/1.jpg');
       background-size: 100%;
     }
-    .alert{
+    .alert {
       text-align: center;
     }
-     .box{
-       margin: auto;
-     }
-     #regButton, .btn{
+    .box {
+      margin: auto;
+    }
+    #regButton, .btn {
  			margin-top:5%;
  		}
 		</style>
 </head>
 <body>
-  <% if (flashMessages) { %>
-    <% if (flashMessages.success) {
-      flashMessages.success.forEach(function(successMsg){%>
+  <% if (flashMessages && flashMessages.success) {
+      flashMessages.success.forEach(function(successMsg) {%>
         <div class="alert alert-success" role="alert"><%= successMsg %></div>
     <% });
-    } else if (flashMessages.errors) {
-          flashMessages.errors.forEach(function(errorMsg){ %>
+    } else if (flashMessages && flashMessages.errors) {
+          flashMessages.errors.forEach(function(errorMsg) { %>
               <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
   <% });
-  }} %>
+    } %>
     <div class="container p-5">
         <h1 class="text-center mb-5 text-uppercase">Welcome To Tic Tac Toe! </h1>
         <div class="row">
@@ -51,7 +50,7 @@
                     </div>
                     <% if (flashMessages) {
                         if (flashMessages.loginErrors) {
-                        flashMessages.loginErrors.forEach(function(errorMsg){ %>
+                        flashMessages.loginErrors.forEach(function(errorMsg) { %>
                           <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
                       <% });
                     }}%>

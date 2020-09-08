@@ -17,15 +17,15 @@ class Home {
   }
 
   //SCOREBOARD
-  async scoreboard(req, res){
-    try{
+  async scoreboard(req, res) {
+    try {
       const [userResult] = await mysql.execute(query.searchUserScore, [req.session.id]);
       const [allUserResult] = await mysql.execute(query.searchAllUserScore);
-      if(userResult.length == 1){
-        return res.render('scoreboard', { userResult: userResult, allUserResult: allUserResult});
+      if (userResult.length == 1) {
+        return res.render('scoreboard', { userResult: userResult, allUserResult: allUserResult });
       }
     }
-    catch(error){
+    catch (error) {
       //REDERING SCOREBOARD PAGE WITH SCOREBOARD ERRORS
       console.log(error);
       await req.flash('showScoreErrors', 'ShowScore: Something went wrong! Internal server error!');

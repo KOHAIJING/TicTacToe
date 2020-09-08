@@ -20,7 +20,7 @@ class Socket {
         const { id } = socket;
         const { clientId, name } = socket.handshake.query;
         //IF clients HAS NOT THE CLIENT ID, MEANS THE CLIENT'S ACCOUNT JUST CONNECT TO A SOCKET ONLY
-        if(!this.clients.includes(clientId)){
+        if (!this.clients.includes(clientId)) {
           console.log(`New client connected. Client ID:${clientId}   Client Name: ${name}   Socket ID: ${id}`);
           // STORE THE CURRENT CLIENT'S ID TO 'clients'
           this.clients.push(clientId);
@@ -59,7 +59,7 @@ class Socket {
 //CONFIRM RECHALLENGE WITH SAME OPPONENT, RESTART GAME (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'restart.game')
           socket.on('restart.game', (reqMessage) => {
             const sameOpponent = this.opponentOf(socket);
-            if(sameOpponent){
+            if (sameOpponent) {
               //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'game.begin'
               //AND PASS CURRENT CLIENT'S SYMBOL AND OPPONENT'S NAME TO CURRENT CLIENT
               socket.emit('game.begin', {
@@ -97,22 +97,29 @@ class Socket {
             //AND PASS THE SCORE DATA TO CURRENT CLIENT'S SOCKET
             socket.on('game.over', async (gameResult) => {
               const [userResult] =  await mysql.execute(query.searchUserScore, [this.players[id].clientId]);
-              if(userResult.length == 1){
+              if (userResult.length == 1) {
                 let played = userResult[0].total_played;
                 let win = userResult[0].total_win;
                 let percentage = userResult[0].percentage;
-                if(gameResult.length > 0){
+                if (gameResult.length > 0) {
                   played++;
-                  if(gameResult == 'WIN')
+                  if (gameResult == 'WIN')
                     win++;
                   percentage = Math.round(win/played * 100);
                   const opponent = this.opponentOf(socket);
                   let opponentName = '';
-                  if(opponent)
+                  if (opponent)
                     opponentName = this.players[opponent.id].name;
-                  const doneInsertScore = await mysql.execute(query.insertScore, [this.players[id].clientId, this.players[opponent.id].clientId, gameResult]);
-                  const doneInsertUserScore = await mysql.execute(query.insertUserScore, [played, win, percentage, this.players[id].clientId]);
-                  if(doneInsertScore && doneInsertUserScore)
+                  const doneInsertScore = await mysql.execute(query.insertScore,
+                    [this.players[id].clientId,
+                    this.players[opponent.id].clientId,
+                    gameResult]);
+                  const doneInsertUserScore = await mysql.execute(query.insertUserScore,
+                    [played,
+                    win,
+                    percentage,
+                    this.players[id].clientId]);
+                  if (doneInsertScore && doneInsertUserScore)
                     socket.emit('score.inserted', {opponentName, gameResult, played, win, percentage});
                 }
                 else
@@ -126,7 +133,7 @@ class Socket {
             console.log(`Client disconnected. Client ID:${clientId}   Client Name: ${name}  Socket ID: ${id}`);
             //SEND TO ALL CLIENTS, THE CURRENT CLIENT'S EVENT NAME 'client.disconnect'
             //AND PASS SOCKET ID TO ALL CLIENTS
-            socket.broadcast.emit("client.disconnect", id);
+            socket.broadcast.emit('client.disconnect', id);
             //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
             const opponent = this.opponentOf(socket);
             //IF HAS, SEND TO THE OPPONENT, THE CURRENT CLIENT'S EVENT NAME 'opponent.left'
@@ -144,7 +151,7 @@ class Socket {
 
         }
         //IF clients HAS THE CLIENT ID, MEANS THE CLIENT'S ACCOUNT HAD CONNECTED TO A SOCKET, CANNOT CREATE ONE MORE SOCKET
-        else{
+        else {
           console.log(`${name}'s socket authenticated.`);
           socket = null;
           return;
@@ -165,18 +172,19 @@ class Socket {
         clientId,
         name,
         opponent: null,
-        symbol: "X",
+        symbol: 'X',
         socket,
       };
       //CHECK 'unmatched' ARRAY TO SEE WHETHER HAS SOCKET ID IS WAITING OPPONENT:
       if (this.unmatched.length > 0) {
-        //IF HAS, UPDATE THE CURRENT CLIENT'S OPPONENTID, SYMBOL="O" AND OPPONENT'S OPPONENTID
+        //IF HAS, UPDATE THE CURRENT CLIENT'S OPPONENTID, SYMBOL='O' AND OPPONENT'S OPPONENTID
         //unmatched = [socketId1, socketId2]
         const unmatchedPlayerSocketId = this.unmatched.shift();
         this.players[id].symbol = 'O';
         this.players[id].opponent = unmatchedPlayerSocketId;
         this.players[unmatchedPlayerSocketId].opponent = id;
-      } else {
+      }
+      else {
         //IF HAS NOT, INSERT THE CURRENT CLIENT'S SOCKET ID TO UNMATCHED
         //unmatched = [ socketId ]
         this.unmatched.push(id);

@@ -35,11 +35,6 @@ INSERT INTO users(name, email, password)
 VALUES(?, ?, ?);
 `;
 
-exports.searchScore = `
-SELECT * FROM scores
-WHERE user_id = ?;
-`;
-
 exports.insertScore = `
 INSERT INTO scores(user_id, opponent_id, result)
 VALUES(?, ?, ?);

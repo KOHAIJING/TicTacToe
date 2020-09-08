@@ -35,27 +35,25 @@
     li a:hover {
       background-color: #111;
     }
-
-
-    .alert{
+    .alert {
       text-align: center;
     }
-    .box{
+    .box {
       margin: auto;
     }
-    #backButton, .btn{
-     margin-top:5%;
-   }
-   /* SCOREBOARD TABLE */
-  .table_scoreboard thead{
-    background-color: lightblue;
-  }
-  .table_scoreboard {
-    table-layout: fixed;
-  }
-  .table_scoreboard tr {
-    overflow-wrap: break-word;
-  }
+    #backButton, .btn {
+      margin-top: 5%;
+    }
+    /* SCOREBOARD TABLE */
+    .table_scoreboard thead {
+      background-color: lightblue;
+    }
+    .table_scoreboard {
+      table-layout: fixed;
+    }
+    .table_scoreboard tr {
+      overflow-wrap: break-word;
+    }
 		</style>
 </head>
 <body>
@@ -67,7 +65,7 @@
   </ul>
   <% if (flashMessages) { %>
     <% if (flashMessages.showScoreErrors) {
-          flashMessages.showScoreErrors.forEach(function(errorMsg){ %>
+          flashMessages.showScoreErrors.forEach(function(errorMsg) { %>
               <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
   <% });
   }} %>
@@ -89,16 +87,16 @@
                   <tr> <th style="width:15%">Rank</th> <th style="width:45%">Name</th> <th style="width:40%">Percentage</th> </tr>
                 </thead>
                 <tbody>
-                  <% if(allUserResult.length == 0) { %>
+                  <% if (allUserResult.length == 0) { %>
                     <tr> <td colspan="3">--- no record ---</td> </tr>
                   <% }
-                  else{
+                  else {
                     let counter = 0;
                     allUserResult.forEach(result => {
                       counter++;
-                      if(result.name == userResult[0].name){ %>
+                      if (result.name == userResult[0].name) { %>
                     <tr style="font-weight:bold;"> <td><%= counter %></td> <td><%= result.name %></td> <td><%= result.percentage %> %</td> </tr>
-                    <%} else{ %>
+                    <%} else { %>
                     <tr> <td><%= counter %></td> <td><%= result.name %></td> <td><%= result.percentage %> %</td> </tr>
                     <%}
                     });
@@ -110,7 +108,6 @@
       </div>
   </div>
     <script>
-    //console.log(result[0].name)
     </script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
