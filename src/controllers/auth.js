@@ -10,7 +10,7 @@ class Auth {
 
 //DIRECT TO LOGIN PAGE
 async login(req, res){
-  return res.render('login', {
+  return res.render('auth/login', {
     errors: await req.flash('error'),
     success: await req.flash('success'),
   });
@@ -18,7 +18,7 @@ async login(req, res){
 
 //DIRECT TO REGISTER PAGE
 async register(req, res){
-  return res.render('registration', {
+  return res.render('auth/registration', {
     errors: await req.flash('error')
   });
 }

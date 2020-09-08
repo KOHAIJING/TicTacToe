@@ -8,8 +8,12 @@ class Home {
     return res.render('menu', { name: req.session.name });
   }
 
-  game(req, res) {
-    return res.render('game', { clientId: req.session.id, name: req.session.name });
+  gameWithPlayer(req, res) {
+    return res.render('gameWithPlayer', { clientId: req.session.id, name: req.session.name });
+  }
+
+  gameWithAI(req, res) {
+    return res.render('gameWithAI', { name: req.session.name });
   }
 
   //SCOREBOARD

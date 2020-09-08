@@ -1,0 +1,515 @@
+<!-- When logged-in users clicked to play game and play with AI. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tic Tac Toe - Game (Play With AI)</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style type="text/css">
+      body {
+        background-image: url("https://ak.picdn.net/shutterstock/videos/21184336/thumb/1.jpg");
+        background-size: 100%;
+      }
+      /* TOP BAR*/
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #3A5795;
+      }
+      li {
+        float: right;
+      }
+      li a {
+        display: block !important;
+        color: white !important;
+        text-align: center !important;
+        padding: 14px 16px !important;
+        text-decoration: none !important;
+      }
+      li a:hover {
+        background-color: #111;
+      }
+      /* MODAL BACKGROUND */
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: 100px; /* Location of the box */
+        left: 0;
+        top: 0;
+        align-items: center;
+        justify-content: center;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+      }
+      /* MODAL CONTENT */
+      .modal-content {
+        position: relative;
+        background-color: #fefefe;
+        margin: auto;
+        padding: 0;
+        border: 1px solid #888;
+        margin-top:50px;
+        width: 50%;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+        -webkit-animation-name: animatetop;
+        -webkit-animation-duration: 0.4s;
+        animation-name: animatetop;
+        animation-duration: 0.4s
+      }
+      .modal-header {
+        padding: 2px 16px;
+        background-color: #3A5795;
+        color: white;
+      }
+      .modal-body {
+        padding: 30px 30px;
+        text-align: center;
+        font-size: 1em;
+      }
+      .modal-body img{
+        width: 100px;
+        height: 100px;
+        margin: auto;
+      }
+      #modalBody button{
+        color: black;
+        background-color: #ADD8E6;
+        margin: 5%;
+      }
+      #resultModalBody button{
+        color: black;
+        background-color:#ADD8E6;
+        margin-bottom: 5px;
+      }
+      .modal-body button:hover{
+        font-weight: bold;
+      }
+      /* MODAL ANIMATION */
+      @-webkit-keyframes animatetop {
+        from {top:-300px; opacity:0}
+        to {top:0; opacity:1}
+      }
+      @keyframes animatetop {
+        from {top:-300px; opacity:0}
+        to {top:0; opacity:1}
+      }
+      /* MODAL TABLE */
+      .table{
+        margin:0 10%;
+      }
+      .table tr{
+        text-align: left;
+      }
+      /* AI style */
+      #message {
+        font-size: 2rem;
+        margin: 10px auto;
+        text-align: center;
+      }
+      #root {
+        margin: auto;
+        width: 490px;
+        text-align: center;
+      }
+      .cell {
+        width: 150px;
+        height: 150px;
+        margin: 5px;
+        font-size: 3em;
+        background-color: white;
+        text-align: center;
+        line-height: 150px;
+      }
+      .cell.winningLine {
+        color:green;
+      }
+    </style>
+</head>
+<body>
+  <ul>
+      <li style="float: left;"><a href="/home">TIC TAC TOE</a></li>
+      <li><a href="/api/logout" data-toggle="tooltip" data-placement="bottom" title="Logout">
+        <i class="fa fa-sign-out" style="color: white; font-size: 20px;"></i>
+      </a></li>
+    </ul>
+
+  <div id="root"></div>
+
+  <!-- MODAL DISPLAY WHEN GAME END -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <p style="margin-left:5px; margin-top:5px;"> Game End <p>
+        <span class="close">&times;</span>
+      </div>
+      <div id="resultModalBody" class="modal-body"></div>
+  </div>
+</div>
+
+<!-- MODAL DISPLAY BEFORE GAME START -->
+<div id="myModal2" class="modal" style="display: block;">
+  <div class="modal-content">
+    <div id="modalBody" class="modal-body"></div>
+</div>
+</div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      const MODE = {
+        easy: 0,
+        hard: 1,
+      };
+      const SYMBOLS = {
+        x:'X',
+        o:'O',
+      };
+      const RESULT = {
+        incomplete: 0,
+        playerXWon: SYMBOLS.x,
+        playerOWon: SYMBOLS.o,
+        tie: 3,
+      };
+      const VIEW = {
+        question1: 0,
+        question2: 1,
+        game: 2,
+        result: 3,
+      };
+      //LOGOUT TOOLTIP (WHEN MOUSE HOVER, DISPLAY THE LOGOUT LABEL WITH SPEECH BUBBLE LAYOUT)
+      $(document).ready(function(){
+        $('[data-toggle=\'tooltip\']').tooltip();
+      });
+
+      //BOARD
+      function Board(){
+
+        /* set initial mode state, view state and initial players state */
+        state = {
+          mode: MODE.hard,
+          view: VIEW.question1,
+          players: [ {symbol: null, isComputer: false, score: 0}, {symbol: null, isComputer: true, score: 0} ],
+        };
+
+        /* set initial board state and set first turn randomly */
+        function initGame(){
+          state.game = {
+            _gameBoard: [
+              ["", "", ""],
+              ["", "", ""],
+              ["", "", ""],
+            ],
+            turn: Math.round(Math.random()),
+          };
+        }
+
+        /* count the clicked cells */
+        function moveCount(board){
+          let moveCount = 0;
+          for (let i = 0; i<board.length; i++){
+            for (let j = 0 ; j<board[i].length ; j++){
+              if (board[i][j]!=""){
+                moveCount++;
+              }
+            }
+          }
+          return moveCount;
+        }
+
+        /* returns object {result, [winning line]} */
+        function getResult(board,symbol){
+            let result = RESULT.incomplete;
+            if (moveCount(board)<5){ //no match and tie, return {result}
+              {result};
+            }
+            function succession(line){ //3 Same Symbol
+              return (line === symbol.repeat(3));
+            }
+            let line;
+            let winningLine=[];
+            for (var i = 0 ; i<3 ; i++){ //ROW
+              line = board[i].join('');
+              if(succession(line)){
+                result = symbol;
+                winningLine = [[i,0], [i,1], [i,2]]
+                return {result, winningLine};
+              }
+            }
+            for (var j=0 ; j<3; j++){ //COLUMN
+              let column = [board[0][j],board[1][j],board[2][j]];
+              line = column.join('');
+              if(succession(line)){
+                result = symbol;
+                winningLine = [[0,j], [1,j], [2,j]];
+                return {result, winningLine};
+              }
+            }
+            let diag1 = [board[0][0],board[1][1],board[2][2]]; //DIAGONAL 1
+            line = diag1.join('');
+            if(succession(line)){
+              result = symbol;
+              winningLine = [[0,0], [1,1], [2,2]];
+              return {result, winningLine};
+            }
+            let diag2 = [board[0][2],board[1][1],board[2][0]]; //DIAGONAL 2
+            line = diag2.join('');
+            if(succession(line)){
+              result = symbol;
+              winningLine = [[0,2], [1,1], [2,0]];
+              return {result, winningLine};
+            }
+            if (moveCount(board)==9){ //TIE
+              result=RESULT.tie;
+              return {result, winningLine};
+            }
+            return {result};
+        }
+
+        /* get the best object {move, score} */
+        function getBestMove(board, symbol){
+          let availableMoves = [];
+          let availableMovesAndScores = [];
+          for (let row = 0 ; row<3 ; row++){ //get object array [ {available moves row, available moves column} ]
+            for (let column = 0 ; column<3 ; column++){
+              if (board[row][column]===""){
+                availableMoves.push({row, column});
+              }
+            }
+          }
+          for (var i=0 ; i<availableMoves.length ; i++){ //get object array [ {available moves, possible score} ]
+            let move = availableMoves[i];
+            let newBoard = [];
+            let score;
+            for (let row = 0 ; row<3 ; row++){ //duplicate board array
+              newBoard.push([]);
+              for (let column = 0 ; column<3 ; column++){
+                newBoard[row][column] = board[row][column];
+              }
+            }
+            newBoard[move.row][move.column] = symbol; //put symbol into every avalaible move to see possible score
+            let result = getResult(newBoard,symbol).result;
+            if (result == RESULT.tie)
+              score = 0;
+            else if (result == symbol)
+              score = 1;
+            else {
+              let otherSymbol = (symbol==SYMBOLS.x)? SYMBOLS.o : SYMBOLS.x;
+              let nextMove = getBestMove(newBoard, otherSymbol); //recursion
+              score = - (nextMove.score); //if next best move(opponent) is 1 score -1, -1 score 1, 0 score -0
+            }
+            if(score === 1) //if possible score is 1, return the best {move, score}
+              return {move, score};
+            if(state.mode == MODE.easy && score !== 1){ //if it is easy mode and no possible match, then return random move {move}
+              let move = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+              return {move};
+            }
+            availableMovesAndScores.push({move, score});
+          }
+          availableMovesAndScores.sort((moveA, moveB)=>{return moveB.score - moveA.score;}); //get the biggest score
+          return availableMovesAndScores[0]; //return the best {move, score}
+        }
+
+        function render(){
+          /* call to display view based on view state */
+          if (state.view == VIEW.question1) {
+            htmlQ1();
+          }
+          else if (state.view == VIEW.question2) {
+            htmlQ2();
+          }
+          else if (state.view == VIEW.result) {
+            htmlGameEnd();
+          }
+          else {
+            htmlGame();
+          }
+          /* when view state is question1 - display modal to choose easy or hard */
+         function htmlQ1(){
+           const html=`
+           <button id="easyMode" type="button" class="btn btn-default btnGroup1" data="0">
+             <p>Easy</p>
+             <img src="https://www.pinclipart.com/picdir/middle/119-1190998_star-half-svg-png-icon-free-download-one.png" alt="">
+           </button>
+           <button id="hardMode" type="button" class="btn btn-default btnGroup1" data="1">
+             <p>Hard</p>
+             <img src="https://www.pinclipart.com/picdir/middle/406-4063060_star-black-fivepointed-shape-svg-png-icon-free.png" alt="">
+           </button>`;
+           document.getElementById('modalBody').innerHTML = html;
+         }
+         /* when view state is question2 - display modal to choose symbol X or O */
+          function htmlQ2(){
+            const html=`<p>Which symbols would you like to use?</p>
+            <button type="button" class="btn btn-default btnGroup2" data="X">X</button>
+            <button type="button" class="btn btn-default btnGroup2" data="O">O</button>`;
+            document.getElementById('modalBody').innerHTML = html;
+          }
+          /* when view state is game - display board to start game */
+          function htmlGame(){
+            let message = `<p id="message">Your Turn</p>`;
+            let board = state.game._gameBoard.reduce((acc,curr,rowIndex)=>{
+                return acc + `<div id= "row${rowIndex}" class="row">
+                ${curr.map((str,colIndex)=>`<div class="cell col${colIndex}" data-row=${rowIndex} data-column=${colIndex}>${str}</div>`).join('')}
+                </div>`}, ``);
+            document.getElementById('root').innerHTML = `
+            <div id='gameView'>
+            <p id="message">Your Turn</p>
+            <div id="board">${board}</div>
+            </div>`;
+          }
+          /* when view state is result - display board and result */
+          function htmlGameEnd(){
+            function arraysAreEqual (arr1, arr2){
+              if(arr1.length !== arr2.length)
+                return false;
+              for(var i = arr1.length; i--;) {
+                  if(arr1[i] !== arr2[i])
+                      return false;
+              }
+              return true;
+            }
+            let {result, winningLine} = getResult(state.game._gameBoard, state.players[state.game.turn].symbol);
+            let resultText = "tie";
+            if(result !== RESULT.tie){
+              if(result === state.players[0].symbol)
+                  resultText = 'You Win';
+              else
+                  resultText = 'Computer Win';
+            }
+            let board = state.game._gameBoard.reduce(function(acc,curr,rowIndex){
+                return acc + `<div id="row${rowIndex}" class="row">${curr.map(
+                  (str,colIndex)=>
+                  `<div class="cell col${colIndex} ${winningLine.some(arr=>(arraysAreEqual(arr,[rowIndex,colIndex]))) ? "winningLine" : ""}"
+                    data-row=${rowIndex} data-column=${colIndex}>${str}</div>`).join('')}</div>`
+              }, ``);
+            let html = `
+              <table class="table table-borderless">
+                <tbody>
+                  <tr> <td style="width:40%">Your Name: </td> <td style="width:60%; color:blue;"><%= name %></td> </tr>
+                  <tr> <td style="width:40%">Result: </td> <td style="width:60%; color:blue;">${resultText}</td> </tr>
+                  <tr> <td style="width:40%">Your Score: </td> <td style="width:60%; color:blue;">${state.players[0].score}</td> </tr>
+                  <tr> <td style="width:40%">Computer Score: </td> <td style="width:60%; color:blue;">${state.players[1].score}</td> </tr>
+                </tbody>
+              </table>
+              <div>
+                <br>
+                <button id="rechallenge">Rechallenge</button>
+                <button id="challengePlayer" onclick="location.replace('/gameWithPlayer');">Challenge With Player</button>
+                <button id="quitGame" onclick="location.replace('/menu');">Quit The Game Session</button>
+              </div>`;
+            document.getElementById('root').innerHTML = `
+            <div id='resultView'>
+              <p id="message">${resultText}</p>
+              <div id="board">${board}</div>
+              </div>`;
+            setTimeout(() => {
+              document.getElementById('resultModalBody').innerHTML = html;
+              document.getElementById('myModal').style.display = 'block';
+            }, 1000);
+          }
+        }
+
+        /* onclick event when user is choosing easy or hard  */
+        function question1Handler(ev){
+          let mode = $(ev.currentTarget).attr('data');
+          state.mode = mode;
+          state.view = VIEW.question2;
+          render();
+        }
+
+        /* onclick event when user is choosing symbol X or O  */
+        function question2Handler(ev){
+          document.getElementById('myModal2').style.display = 'none';
+          let player1Symbol = $(ev.currentTarget).attr('data');
+          state.players[0].symbol=player1Symbol;
+          state.players[1].symbol=(player1Symbol===SYMBOLS.x)? SYMBOLS.o: SYMBOLS.x;
+          state.view = VIEW.game;
+          initGame();
+          if(state.players[state.game.turn].isComputer)
+            doComputerMove();
+          render();
+        }
+
+        /* when turn is computer, computer take action by get best move and execute turn */
+        function doComputerMove(){
+          let board = state.game._gameBoard;
+          let symbol = state.players[1].symbol;
+          let move = getBestMove(board, symbol).move;
+          executeTurn(board, move, symbol);
+        }
+
+        /* computer put symbol into board and show result based on the result */
+        function executeTurn(board, move, symbol){
+          if (board[move.row][move.column]!==""){
+            return board;
+          }
+          board[move.row][move.column]= symbol;
+          let result = getResult(board, symbol).result;
+          if (result === RESULT.incomplete){
+            render();
+          }
+          else {
+            if(result !== RESULT.tie) {
+              let winningPlayer = state.players.find((player)=>{return player.symbol == result});
+              winningPlayer.score++;
+            }
+            state.view = VIEW.result;
+            render();
+          }
+          state.game.turn = (state.game.turn+1)%2; //if 0 then 1, if 1 then 0
+          if (result==RESULT.incomplete && state.players[state.game.turn].isComputer){
+            doComputerMove();
+          }
+        }
+
+        /* onclick event when user is clicking cell */
+        function playerMoveHandler(ev){
+          let board = state.game._gameBoard;
+          let symbol = state.players[state.game.turn].symbol;
+          let row = parseInt($(ev.currentTarget).attr('data-row'));
+          let column = parseInt($(ev.currentTarget).attr('data-column'));
+          let move = {row, column};
+          executeTurn(state.game._gameBoard, move, symbol);
+        }
+
+        /* onclick event when user is clicking rechallenge button */
+        function beginGame(){
+          document.getElementById('myModal').style.display = 'none';
+          initGame();
+          state.view = VIEW.game;
+          render();
+          if(state.game.turn === 1 && state.players[1].isComputer)
+            doComputerMove();
+        }
+
+        /* set onclick event for choosing easy or hard, for choosing X or O, for clicking cell, for clicking rechallenge button */
+        $(document.getElementById('modalBody')).on('click', '.btnGroup1', question1Handler);
+        $(document.getElementById('modalBody')).on('click', '.btnGroup2', question2Handler);
+        $(document.getElementById('root')).on('click', '#gameView .cell', playerMoveHandler);
+        $(document.getElementById('resultModalBody')).on('click', '#rechallenge', beginGame);
+
+        /* call render to display view */
+        render();
+
+      }
+
+      const board = new Board ();
+
+    </script>
+
+</body>
+</html>
