@@ -98,14 +98,12 @@ class Socket {
             socket.on('game.over', async (gameResult) => {
               const [userResult] =  await mysql.execute(query.searchUserScore, [this.players[id].clientId]);
               if (userResult.length == 1) {
-                let played = userResult[0].total_played;
-                let win = userResult[0].total_win;
-                let percentage = userResult[0].percentage;
+                let {total_played, total_win, percentage} = userResult[0];
                 if (gameResult.length > 0) {
-                  played++;
+                  total_played++;
                   if (gameResult == 'WIN')
-                    win++;
-                  percentage = Math.round(win/played * 100);
+                    total_win++;
+                  percentage = Math.round(total_win/total_played * 100);
                   const opponent = this.opponentOf(socket);
                   let opponentName = '';
                   if (opponent)
@@ -115,15 +113,15 @@ class Socket {
                     this.players[opponent.id].clientId,
                     gameResult]);
                   const doneInsertUserScore = await mysql.execute(query.insertUserScore,
-                    [played,
-                    win,
+                    [total_played,
+                    total_win,
                     percentage,
                     this.players[id].clientId]);
                   if (doneInsertScore && doneInsertUserScore)
-                    socket.emit('score.inserted', {opponentName, gameResult, played, win, percentage});
+                    socket.emit('score.inserted', {opponentName, gameResult, total_played, total_win, percentage});
                 }
                 else
-                  socket.emit('score.noupdate', {played, win, percentage});
+                  socket.emit('score.noupdate', {total_played, total_win, percentage});
               }
            });
 

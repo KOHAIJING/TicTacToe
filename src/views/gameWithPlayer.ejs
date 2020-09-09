@@ -330,6 +330,9 @@
       socket.on('game.begin', ({ symbol: symbolSign, opponentName }) => {
         symbol = symbolSign;
         myTurn = symbol === 'X';
+        finish = false;
+        match = false;
+        gameResult = '';
         renderTurnMessage(opponentName);
         document.getElementById('myModal').style.display = 'none';
         $('.board button').each(function() {
@@ -377,8 +380,8 @@
             $('#displayOpponentName').html(`${score.opponentName}`);
             $('#displayResult').html(`${score.gameResult}`);
             $('#displayPercentage').html(`${score.percentage} %`);
-            $('#displayTotalWin').html(`${score.win}`);
-            $('#displayTotalPlayed').html(`${score.played}`);
+            $('#displayTotalWin').html(`${score.total_win}`);
+            $('#displayTotalPlayed').html(`${score.total_played}`);
           });
           $('.board button').attr('disabled', true);
           setTimeout(() => {
@@ -394,15 +397,14 @@
         if (!match && !finish) {
           socket.emit('game.over', gameResult);
           socket.on('score.noupdate', (score) => {
-            $('#displayOpponentName').html(`${opponentName} ( Your Opponent Left )`);
             $('#displayResult').html(` ( Game Interrupted )`);
             $('#displayPercentage').html(`${score.percentage} %`);
-            $('#displayTotalWin').html(`${score.win}`);
-            $('#displayTotalPlayed').html(`${score.played}`);
-            document.getElementById('myModal').style.display = 'block';
+            $('#displayTotalWin').html(`${score.total_win}`);
+            $('#displayTotalPlayed').html(`${score.total_played}`);
           });
         }
         $('#displayOpponentName').html(`${opponentName} ( Your Opponent Left )`);
+        document.getElementById('myModal').style.display = 'block';
         $('#rechallenge').attr('hidden', true);
         $('.board button').attr('disabled', true);
       });
