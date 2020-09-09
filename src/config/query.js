@@ -9,6 +9,7 @@ CREATE TABLE users (
   percentage INT(10) NOT NULL DEFAULT '0',
   PRIMARY KEY (id),
   UNIQUE KEY email (email)
+  INDEX SCORE (name, total_win, total_played, percentage)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 `;
 
@@ -30,6 +31,17 @@ SELECT * FROM users
 WHERE email = ?;
 `;
 
+exports.searchUserScore = `
+SELECT name, total_win, total_played, percentage FROM users
+WHERE id = ?;
+`;
+
+exports.searchAllUserScore = `
+SELECT name, total_win, total_played, percentage FROM users
+WHERE total_played != 0
+ORDER BY percentage DESC;
+`;
+
 exports.insertUser = `
 INSERT INTO users(name, email, password)
 VALUES(?, ?, ?);
@@ -40,18 +52,7 @@ INSERT INTO scores(user_id, opponent_id, result)
 VALUES(?, ?, ?);
 `;
 
-exports.searchUserScore = `
-SELECT name, total_win, total_played, percentage FROM users
-WHERE id = ?;
-`;
-
-exports.insertUserScore = `
+exports.updateUserScore = `
 UPDATE users
 SET total_played = ?, total_win = ?, percentage = ? WHERE id = ?;
-`;
-
-exports.searchAllUserScore = `
-SELECT name, total_win, total_played, percentage FROM users
-WHERE total_played != 0
-ORDER BY percentage DESC;
 `;

@@ -112,12 +112,12 @@ class Socket {
                     [this.players[id].clientId,
                     this.players[opponent.id].clientId,
                     gameResult]);
-                  const doneInsertUserScore = await mysql.execute(query.insertUserScore,
+                  const doneUpdateUserScore = await mysql.execute(query.updateUserScore,
                     [total_played,
                     total_win,
                     percentage,
                     this.players[id].clientId]);
-                  if (doneInsertScore && doneInsertUserScore)
+                  if (doneInsertScore && doneUpdateUserScore)
                     socket.emit('score.inserted', {opponentName, gameResult, total_played, total_win, percentage});
                 }
                 else
