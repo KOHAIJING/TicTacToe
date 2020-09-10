@@ -8,8 +8,8 @@ CREATE TABLE users (
   total_played INT(10) NOT NULL DEFAULT '0',
   percentage INT(10) NOT NULL DEFAULT '0',
   PRIMARY KEY (id),
-  UNIQUE KEY email (email)
-  INDEX SCORE (name, total_win, total_played, percentage)
+  UNIQUE KEY email (email),
+  INDEX TOTAL_PLAYED (total_played)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 `;
 
