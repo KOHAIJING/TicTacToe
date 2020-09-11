@@ -55,7 +55,7 @@ class Socket {
             this.gameSession(socket);
           });
 
-          //INVITEE ACCEPT, UPDATE THE INVITEE'S OPPONENTID, SYMBOL='O' AND OPPONENT'S OPPONENTID
+// ACCEPT INVITATION, UPDATE THE INVITEE'S OPPONENTID, SYMBOL='O' AND OPPONENT'S OPPONENTID
           socket.on('accept.invitation', (socketId) => {
             this.players[id].symbol = 'O';
             this.players[id].opponent = socketId;
@@ -67,6 +67,7 @@ class Socket {
             this.gameSession(socket);
           });
 
+//REJECT INVITATION, SEND TO THE INVITATION OWNER'S SOCKET TO DISPLAY REJECT MESSAGE
           socket.on('reject.invitation', (id) => {
             let message = 'Invitee reject your invitation.';
             this.players[id].socket.emit('display.error', message);
@@ -170,8 +171,13 @@ class Socket {
       else if (socketId && matched)
         err = 'The player has already in other challenge.'
       else if (socketId && !matched) {
+        //IF EMAIL CORRECT AND THE PLAYER DONT HAVE MATCH,
+        //SEND TO INVITEE'S SOCKET, EVENT NAME 'request.invitation' TO REQUEST ACCEPT, PASS CLIENT'S SOCKET ID
+        //AND SEND TO CLIENT'S SOCKET, EVENT NAME 'waiting.accept' TO SHOW WAITING MESSAGE
         let reqMessage = this.players[id].name + ' invite you to have a challenge, accept?';
+        let waitingMessage = 'Invited. Please wait for invitee accept.';
         this.players[socketId].socket.emit('request.invitation', { reqMessage, id });
+        socket.emit('waiting.accept', waitingMessage);
       }
       if (err) {
         socket.emit('display.error', err);

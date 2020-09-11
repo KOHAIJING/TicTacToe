@@ -225,8 +225,6 @@
       function inviteHandler() {
         let inputEmail = document.getElementById('email').value;
         socket.emit('invite.opponent', inputEmail);
-        const html = `<h5>Invited. Please wait for invitee accept. </h5>`;
-        document.getElementById('modalBody').innerHTML = html;
       }
 
       //WHEN USER CLICK BACK
@@ -403,23 +401,34 @@
         }
       });
 
+      //RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'display.error' AND DISPLAY ERROR MESSAGE FOR INVITATION
+      socket.on('display.error', (err) => {
+        inviteOpponent();
+        document.getElementById('myModal2').style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorMessage').innerHTML = err;
+      });
+
+      //RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'waiting.accept' AND DISPLAY WAITING MESSAGE
+      socket.on('waiting.accept', (waitingMessage) => {
+        const html = `<h5>${waitingMessage}</h5>`;
+        document.getElementById('modalBody').innerHTML = html;
+      });
+
+      //RECEIVE FROM INVITATION OWNER'S SOCKET, EVENT NAME 'request.invitation'
+      //AND POP OUT WINDOW TO ACCEPT INVITATION
+      //IF ACCEPT, SEND TO CURRENT CLIENT'S SOCKET, SOCKET'S EVENT NAME 'accept.invitation'
+      //AND PASS INVITATION OWNER'S SOCKET ID
+      //IF REJECT, SEND TO CURRENT CLIENT'S SOCKET, SOCKET'S EVENT NAME 'reject.invitation'
+      //AND PASS INVITATION OWNER'S SOCKET ID
       socket.on('request.invitation', (obj) => {
         if (window.confirm(obj.reqMessage)) {
-          console.log(obj.id);
           socket.emit('accept.invitation', obj.id);
         }
         else {
           socket.emit('reject.invitation', obj.id);
         }
       });
-
-      socket.on('display.error', (err) => {
-        inviteOpponent();
-        document.getElementById('myModal2').style.display = 'block';
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('errorMessage').innerHTML = err;
-      }
-    );
 
       //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'game.begin'
       //AND CALLING renderTurnMessage FUNCTION WITH OPPONENT NAME
