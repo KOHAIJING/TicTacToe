@@ -218,7 +218,7 @@
         <div id="resultModalBody" class="modal-body">
           <table class="table table-borderless">
             <tbody>
-              <tr> <td style="width:40%">Your Name: </td> <td style="width:60%; color:blue;"><%= userInfo.name %></td> </tr>
+              <tr> <td style="width:40%">Your Name: </td> <td style="width:60%; color:blue;"><%= name %></td> </tr>
               <tr> <td style="width:40%">Opponent Name: </td> <td id="displayOpponentName" style="width:60%; color:blue;"></td> </tr>
               <tr> <td style="width:40%">Your Result: </td> <td id="displayResult" style="width:60%; color:blue;"></td> </tr>
               <tr> <td style="width:40%">Your Percentage: </td> <td id="displayPercentage" style="width:60%; color:blue;"></td> </tr>
@@ -267,7 +267,7 @@
 
       //CONNECT TO SOCKET, GET USER ID AND NAME WHICH STORED IN SESSION (PASS FROM HOME CONTROLLER)
       const url = window.location.origin;
-      const socket = io.connect( `${url}?clientId=${<%- JSON.stringify(userInfo.id) %>}&name=${<%- JSON.stringify(userInfo.name) %>}`);
+      const socket = io.connect( `${url}?clientId=${<%- JSON.stringify(clientId) %>}&name=${<%- JSON.stringify(name) %>}`);
 
       //SUBMIT CHAT MESSAGE WITHOUT RELOAD PAGE
       //AND SEND INPUT CHAT MESSAGE TO SOCKET EVENT NAME 'chat.message'
@@ -528,7 +528,7 @@
       //DISPLAY CHAT MESSAGE AFTER RECEIVE SOCKET EVENT NAME 'chat.message'
       socket.on('chat.message', (obj) => {
         const chat = '<strong>' + obj.name + '</strong>: ' + obj.message;
-        if(obj.name == <%- JSON.stringify(userInfo.name) %>)
+        if(obj.name == <%- JSON.stringify(name) %>)
           $('#messages').prepend($('<li style="background-color: #E6E6FA;">').html(chat));
         else
           $('#messages').prepend($('<li style="background-color: #FFF0F5;">').html(chat));
