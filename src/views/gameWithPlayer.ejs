@@ -9,6 +9,7 @@
     <title>Tic Tac Toe - Game</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
     <style type="text/css">
       body {
         background-image: url("https://ak.picdn.net/shutterstock/videos/21184336/thumb/1.jpg");
@@ -20,24 +21,24 @@
         margin-top: 10px;
       }
       /* TOP BAR*/
-      ul {
+      #topbar {
         list-style-type: none;
         margin: 0;
         padding: 0;
         overflow: hidden;
         background-color: #3A5795;
       }
-      li {
+      #topbar li {
         float: right;
       }
-      li a {
+      #topbar li a {
         display: block !important;
         color: white !important;
         text-align: center !important;
         padding: 14px 16px !important;
         text-decoration: none !important;
       }
-      li a:hover {
+      #topbar li a:hover {
         background-color: #111;
       }
       /* MESSAGE SESSION */
@@ -58,10 +59,56 @@
         margin: 5px;
         font-size: 3em;
       }
+      /* Chat Box */
+      .form-container {
+        display: block;
+        background-color: white;
+        width: 300px;
+        height: 500px;
+        padding: 10px;
+        margin: 30px auto;
+      }
+      .label-container {
+        background: #f1f1f1;
+        border: 1px solid grey;
+        height: 290px;
+        width: 100%;
+        padding: 5px;
+        overflow: scroll;
+      }
+      .form-container input {
+        background: #f1f1f1;
+        border: none;
+        height: 40px;
+        width: 100%;
+        padding: 5px;
+        margin: 10px 0 10px 0;
+        overflow: scroll;
+      }
+      /* CHAT MESSAGES */
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      #messages li {
+        padding: 5px 10px;
+      }
+      .form-container textarea:focus {
+        background-color: #ddd;
+        outline: none;
+      }
+      .form-container .btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
       /* MODAL BACKGROUND */
       .modal {
         display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
         z-index: 1; /* Sit on top */
         padding-top: 100px; /* Location of the box */
         left: 0;
@@ -139,19 +186,30 @@
     </style>
 </head>
 <body>
-  <ul>
+    <ul id="topbar">
       <li style="float: left;"><a href="/home">TIC TAC TOE</a></li>
       <li><a href="/api/logout" data-toggle="tooltip" data-placement="bottom" title="Logout">
         <i class="fa fa-sign-out" style="color: white; font-size: 20px;"></i>
       </a></li>
     </ul>
 
-    <div id="message">Waiting for an opponent...</div>
-
-    <div class="board">
-      <button id="r0c0"></button> <button id="r0c1"></button> <button id="r0c2"></button>
-      <button id="r1c0"></button> <button id="r1c1"></button> <button id="r1c2"></button>
-      <button id="r2c0"></button> <button id="r2c1"></button> <button id="r2c2"></button>
+    <div class="row">
+      <div class="col-xs-7 col-md-7">
+        <div id="message">Waiting for an opponent...</div>
+        <div class="board">
+          <button id="r0c0"></button> <button id="r0c1"></button> <button id="r0c2"></button>
+          <button id="r1c0"></button> <button id="r1c1"></button> <button id="r1c2"></button>
+          <button id="r2c0"></button> <button id="r2c1"></button> <button id="r2c2"></button>
+        </div>
+      </div>
+      <div class="col-xs-5 col-md-5">
+        <form action="/gameWithPlayer" metohd="POST" id="chatForm" class="form-container">
+          <p style="text-align:center;">Chat</p>
+          <div class="label-container"><ul id="messages"></ul></div>
+          <input id="txt" placeholder="Type message..."></input>
+          <button id="chatSubmitButton" type="submit" class="btn">Send</button>
+        </form>
+      </div>
     </div>
 
     <!-- MODAL DISPLAY WHEN GAME END -->
@@ -211,6 +269,17 @@
       const url = window.location.origin;
       const socket = io.connect( `${url}?clientId=${<%- JSON.stringify(userInfo.id) %>}&name=${<%- JSON.stringify(userInfo.name) %>}`);
 
+      //SUBMIT CHAT MESSAGE WITHOUT RELOAD PAGE
+      //AND SEND INPUT CHAT MESSAGE TO SOCKET EVENT NAME 'chat.message'
+        $('form').submit(function(e){
+            e.preventDefault(); // prevents page reloading
+            if(document.getElementById('txt').value !=''){
+              socket.emit('chat.message', $('#txt').val());
+            }
+            $('#txt').val('');
+            return false;
+        });
+
       //WHEN USER CLICK INVITE OPPONENT BUTTON, DISPLAY MODAL CONTENT TO LET USER ENTER INVITEE EMAIL
       const inviteOpponent = () =>  {
         const html = `<p>Enter invitee's email:</p>
@@ -250,6 +319,8 @@
       //DISABLE BOARD AT THE BEGINNING
       //AND CALLING THE makeMove FUNCTION WHEN PLAYER CLICK BUTTON WITH IT'S CELL ATTRIBUTE ID
       $(function() {
+        $('#txt').attr('disabled', true);
+        $('#chatSubmitButton').attr('disabled', true);
         $('.board button').attr('disabled', true);
         $('.board button').click(function() {
           makeMove($(this).attr('id'));
@@ -445,11 +516,26 @@
         renderTurnMessage(opponentName);
         document.getElementById('myModal').style.display = 'none';
         document.getElementById('myModal2').style.display = 'none';
+        $('#txt').removeAttr('disabled');
+        $('#chatSubmitButton').removeAttr('disabled');
         $('.board button').each(function() {
            $(this).text('');
         });
         if (myTurn)
           $('.board button').removeAttr('disabled');
+      });
+
+      //DISPLAY CHAT MESSAGE AFTER RECEIVE SOCKET EVENT NAME 'chat.message'
+      socket.on('chat.message', (obj) => {
+        const chat = '<strong>' + obj.name + '</strong>: ' + obj.message;
+        if(obj.name == <%- JSON.stringify(userInfo.name) %>)
+          $('#messages').prepend($('<li style="background-color: #E6E6FA;">').html(chat));
+        else
+          $('#messages').prepend($('<li style="background-color: #FFF0F5;">').html(chat));
+      });
+      //DISPLAY CONNECTION MESSAGE AFTER RECEIVE SOCKET EVENT NAME 'is_online'
+      socket.on('connection.status', (name) => {
+          $('#messages').prepend($('<li>').html(name));
       });
 
       //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'move.made'
@@ -494,20 +580,24 @@
       //AND DISPLAY MODAL MESSAGE, HIDDEN RECHALLENGE OPTION AND DISABLE THE BOARD
       socket.on('opponent.left', ({ opponentName }) => {
         $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b> left the game`);
-        if (!match && !finish) {
-          socket.emit('game.over', gameResult);
-          socket.on('score.noupdate', (score) => {
-            $('#displayResult').html(` ( Game Interrupted )`);
-            $('#displayPercentage').html(`${score.percentage} %`);
-            $('#displayTotalWin').html(`${score.total_win}`);
-            $('#displayTotalPlayed').html(`${score.total_played}`);
-          });
-        }
-        $('#displayOpponentName').html(`${opponentName} ( Your Opponent Left )`);
-        document.getElementById('myModal').style.display = 'block';
-        document.getElementById('myModal2').style.display = 'none';
         $('#rechallenge').attr('hidden', true);
         $('.board button').attr('disabled', true);
+        $('#txt').attr('disabled', true);
+        $('#chatSubmitButton').attr('disabled', true);
+        setTimeout(() => {
+          if (!match && !finish) {
+            socket.emit('game.over', gameResult);
+            socket.on('score.noupdate', (score) => {
+              $('#displayResult').html(` ( Game Interrupted )`);
+              $('#displayPercentage').html(`${score.percentage} %`);
+              $('#displayTotalWin').html(`${score.total_win}`);
+              $('#displayTotalPlayed').html(`${score.total_played}`);
+            });
+          }
+          $('#displayOpponentName').html(`${opponentName} ( Your Opponent Left )`);
+          document.getElementById('myModal').style.display = 'block';
+          document.getElementById('myModal2').style.display = 'none';
+        }, 1000);
       });
 
     </script>

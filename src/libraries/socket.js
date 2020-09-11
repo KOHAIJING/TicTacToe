@@ -84,6 +84,15 @@ class Socket {
             this.gameSession(socket);
           });
 
+//RECEIVE CHAT MESSAGE EVENT NAME 'chat.message', DISPLAY TO BOTH SIDE
+          socket.on('chat.message', (message) =>{
+            const opponent = this.opponentOf(socket);
+            if (!opponent) return;
+            let obj = {name, message}
+            socket.emit('chat.message', obj);
+            opponent.emit('chat.message', obj);
+          })
+
 //DISCONNECTED (WHEN CLIENT DISCONNECT, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'disconnect')
               socket.on('disconnect', () => {
                 ////WHEN THE CURRENT CLIENT'S SOCKET DISCONNECTED, CONSOLE DISPLAY SOCKET ID
@@ -100,6 +109,9 @@ class Socket {
                     opponent.emit('opponent.left', {
                       opponentName: this.players[id].name,
                     });
+                    //SEND DISCONNECT MESSAGE TO BOTH SIDE, EVENT NAME 'connection.status'
+                    socket.emit('connection.status', '🔴 <i>' + this.players[id].name + ' left the chat.</i>');
+                    opponent.emit('connection.status', '🔴 <i>' + this.players[id].name + ' left the chat.</i>');
                   }
                 }
                 //DELETE FROM 'clients', 'players' and 'unmatched'
@@ -218,6 +230,11 @@ class Socket {
         symbol: this.players[opponent.id].symbol,
         opponentName: this.players[id].name,
       });
+      //SEND CONNECT MESSAGE TO BOTH SIDE, EVENT NAME 'connection.status'
+      socket.emit('connection.status', '🔵 <i>' + this.players[id].name + ' join the chat.</i>');
+      opponent.emit('connection.status', '🔵 <i>' + this.players[opponent.id].name + ' join the chat.</i>');
+      socket.emit('connection.status', '🔵 <i>' + this.players[opponent.id].name + ' join the chat.</i>');
+      opponent.emit('connection.status', '🔵 <i>' + this.players[id].name + ' join the chat.</i>');
     }
   }
 
