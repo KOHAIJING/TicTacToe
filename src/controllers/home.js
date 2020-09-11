@@ -5,22 +5,22 @@ const query = AppRoot('/src/config/query');
 class Home {
 
   menu(req, res) {
-    return res.render('menu', { name: req.session.name });
+    return res.render('menu', { userInfo: req.session.userInfo });
   }
 
   gameWithPlayer(req, res) {
-    return res.render('gameWithPlayer', { clientId: req.session.id, name: req.session.name });
+    return res.render('gameWithPlayer', { userInfo: req.session.userInfo });
   }
 
   gameWithAI(req, res) {
-    return res.render('gameWithAI', { name: req.session.name });
+    return res.render('gameWithAI', { userInfo: req.session.userInfo });
   }
 
   //SCOREBOARD
   async scoreboard(req, res) {
     try {
-      const [userResult] = await mysql.execute(query.searchUserScore, [req.session.id]);
-      const [allUserResult] = await mysql.execute(query.searchAllUserScore);
+      const [userResult] = await mysql.execute(query.searchUserById, [req.session.userInfo.id]);
+      const [allUserResult] = await mysql.execute(query.searchAllUsersByTotalPlayed);
       if (userResult.length == 1) {
         return res.render('scoreboard', { userResult: userResult, allUserResult: allUserResult });
       }

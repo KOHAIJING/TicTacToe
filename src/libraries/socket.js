@@ -9,144 +9,104 @@ class Socket {
     this.clients = []; //TO CONTROL ONE ACCOUNT ONE SOCKET
     this.players = {}; //TO STORE PLAYERS' INFO
     this.unmatched = []; //TO STORE WAITING PLAYERS' SOCKET ID
+    this.emailandSocketId = {}; //TO STORE PLAYERS' ID AND SOCKET ID FOR INVITATION
     this.init();
   }
 
   init() {
     try {
 //CONNECTED (WHEN CLIENT CONNECTS, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'connect')
-      this.socket.on('connect', (socket) => {
+      this.socket.on('connect', async (socket) => {
         //CONSOLE DISPLAY SOCKET NAME AND ID
         const { id } = socket;
         const { clientId, name } = socket.handshake.query;
+        //USE QUERY TO GET THE USER EMAIL
+        let email = '';
+        const [userResult] = await mysql.execute(query.searchUserById, [clientId]);
+        if (userResult.length == 1) {
+          email = userResult[0].email;
+        }
         //IF clients HAS NOT THE CLIENT ID, MEANS THE CLIENT'S ACCOUNT JUST CONNECT TO A SOCKET ONLY
         if (!this.clients.includes(clientId)) {
           console.log(`New client connected. Client ID:${clientId}   Client Name: ${name}   Socket ID: ${id}`);
           // STORE THE CURRENT CLIENT'S ID TO 'clients'
           this.clients.push(clientId);
-          //CALLING FUNCTION: INSERT OR UPDATE THE CURRENT CLIENT'S INFO TO 'players' AND 'unmatched'
-          this.joinGame(socket, clientId, name);
-          //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
-          const opponent = this.opponentOf(socket);
+          //STORE THE CURRENT CLIENT'S EMAIL AND SOCKET ID TO 'emailandSocketId'
+          this.emailandSocketId[email] = id;
+          //STORE THE CURRENT CLIENT'S ID, SOCKET NAME, OPPONENTID, SYMBOL, SOCKET TO 'players'
+          //players = { socketId : {clientId,name,{opponent:null},{symbol:X},socket} }
+          this.players[id] = {
+            clientId,
+            name,
+            email,
+            opponent: null,
+            symbol: 'X',
+            socket,
+          };
 
-//FOUND OPPONENT, START GAME
-          //IF HAS, BEGIN THE GAME BY:
-          if (opponent) {
-            //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'game.begin'
-            //AND PASS CURRENT CLIENT'S SYMBOL AND OPPONENT'S NAME TO CURRENT CLIENT
-            socket.emit('game.begin', {
-              symbol: this.players[id].symbol,
-              opponentName: this.players[opponent.id].name,
-            });
-            //SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'game.begin'
-            //AND PASS OPPONENT'S SYMBOL AND CURRENT CLIENT'S NAME TO OPPONENT
-            opponent.emit('game.begin', {
-              symbol: this.players[opponent.id].symbol,
-              opponentName: this.players[id].name,
-            });
-          }
-
-//REQUEST RECHALLENGE (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'request.rechallenge')
-          //CHECK WHETHER THE CURRENT CLIENT HAS AN OPPONENT OR NOT
-          //IF HAS, SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'rechallenge.request'
-          //AND PASS REQUEST MSG TO OPPONENT
-          socket.on('request.rechallenge', (reqMessage) => {
-            const sameOpponent = this.opponentOf(socket);
-            if (!sameOpponent) return;
-            sameOpponent.emit('rechallenge.request', reqMessage);
-          });
-
-//CONFIRM RECHALLENGE WITH SAME OPPONENT, RESTART GAME (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'restart.game')
-          socket.on('restart.game', (reqMessage) => {
-            const sameOpponent = this.opponentOf(socket);
-            if (sameOpponent) {
-              //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'game.begin'
-              //AND PASS CURRENT CLIENT'S SYMBOL AND OPPONENT'S NAME TO CURRENT CLIENT
-              socket.emit('game.begin', {
-                symbol: this.players[id].symbol,
-                opponentName: this.players[sameOpponent.id].name,
-              });
-              //SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'game.begin'
-              //AND PASS OPPONENT'S SYMBOL AND CURRENT CLIENT'S NAME TO OPPONENT
-              sameOpponent.emit('game.begin', {
-                symbol: this.players[sameOpponent.id].symbol,
-                opponentName: this.players[id].name,
-              });
-            }
-          });
-
-//WHEN PLAYER MAKE ACTION (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'make.move')
-          socket.on('make.move', (data) => {
-            //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT:
-            const opponent = this.opponentOf(socket);
-            //IF NO OPPONENT, RETURN NO ACTION
-            if (!opponent) return;
-            //IF HAS OPPONENT, SEND TO THE CURRENT CLIENT, OPPONENT EVENT NAME 'move.made'
-            //AND PASS OPPONENT'S SOCKET NAME TO CURRENT CLIENT WITH MERGING OPPONENT'S data
-            //data IS FROM FRONT END SIDE, CONTAINS CELL SYMBOL AND CELL ATTRIBUTE ID
-            socket.emit('move.made', { ...data, opponentName: this.players[opponent.id].name });
-            //SEND TO THE OPPONENT, THE CURRENT CLIENT EVENT NAME 'move.made'
-            //AND PASS THE data TO OPPONENT
-            opponent.emit('move.made', data);
-          });
-
-//WHEN GAME OVER  (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'game.over')
-            //GET GAME RESULT AND RUN QUERY TO UPDATE USER SCORE
-            //CALCULATION: total_played PLUS ONE AND IF THE PLAYER WIN, total_win PLUS ONE
-            //IF UPDATE SUCCESSFULLY, SEND TO THE CURRENT CLIENT'S SOCKET, THE CURRENT CLIENT EVENT NAME 'score.inserted'
-            //AND PASS THE SCORE DATA TO CURRENT CLIENT'S SOCKET
-            socket.on('game.over', async (gameResult) => {
-              const [userResult] =  await mysql.execute(query.searchUserScore, [this.players[id].clientId]);
-              if (userResult.length == 1) {
-                let {total_played, total_win, percentage} = userResult[0];
-                if (gameResult.length > 0) {
-                  total_played++;
-                  if (gameResult == 'WIN')
-                    total_win++;
-                  percentage = Math.round(total_win/total_played * 100);
-                  const opponent = this.opponentOf(socket);
-                  let opponentName = '';
-                  if (opponent)
-                    opponentName = this.players[opponent.id].name;
-                  const doneInsertScore = await mysql.execute(query.insertScore,
-                    [this.players[id].clientId,
-                    this.players[opponent.id].clientId,
-                    gameResult]);
-                  const doneUpdateUserScore = await mysql.execute(query.updateUserScore,
-                    [total_played,
-                    total_win,
-                    percentage,
-                    this.players[id].clientId]);
-                  if (doneInsertScore && doneUpdateUserScore)
-                    socket.emit('score.inserted', {opponentName, gameResult, total_played, total_win, percentage});
-                }
-                else
-                  socket.emit('score.noupdate', {total_played, total_win, percentage});
-              }
-           });
-
-//DISCONNECTED (WHEN CLIENT DISCONNECT, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'disconnect')
-          socket.on('disconnect', () => {
-            ////WHEN THE CURRENT CLIENT'S SOCKET DISCONNECTED, CONSOLE DISPLAY SOCKET ID
-            console.log(`Client disconnected. Client ID:${clientId}   Client Name: ${name}  Socket ID: ${id}`);
-            //SEND TO ALL CLIENTS, THE CURRENT CLIENT'S EVENT NAME 'client.disconnect'
-            //AND PASS SOCKET ID TO ALL CLIENTS
-            socket.broadcast.emit('client.disconnect', id);
+//IF USER CHOOSE INVITE OPPONENT, FIND THE OPPONENT, SEND INVITATION, IF INVITEE ACCEPT THEN START GAME
+          socket.on('invite.opponent', (inputEmail) => {
+            //CALLING FUNCTION: INSERT OR UPDATE THE CURRENT CLIENT'S INFO TO 'players' AND 'unmatched'
+            this.joinGameForInviteOpponent(socket, email, inputEmail);
             //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
             const opponent = this.opponentOf(socket);
-            //IF HAS, SEND TO THE OPPONENT, THE CURRENT CLIENT'S EVENT NAME 'opponent.left'
-            //AND PASS THE CURRENT CLIENT'S NAME TO OPPONENT
-            if (opponent) {
-              opponent.emit('opponent.left', {
-                opponentName: this.players[id].name,
-              });
-            }
-            //DELETE FROM 'clients', 'players' and 'unmatched'
-            delete this.players[id];
-            this.unmatched = this.unmatched.filter((element) => element !== id);
-            this.clients = this.clients.filter((element) => element !== clientId);
+            //FOUND OPPONENT AND START GAME
+            this.startGame(socket, opponent);
+            this.gameSession(socket);
           });
 
+          //INVITEE ACCEPT, UPDATE THE INVITEE'S OPPONENTID, SYMBOL='O' AND OPPONENT'S OPPONENTID
+          socket.on('accept.invitation', (socketId) => {
+            this.players[id].symbol = 'O';
+            this.players[id].opponent = socketId;
+            this.players[socketId].opponent = id;
+            //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
+            const opponent = this.opponentOf(socket);
+            //FOUND OPPONENT AND START GAME
+            this.startGame(socket, opponent);
+            this.gameSession(socket);
+          });
+
+          socket.on('reject.invitation', (id) => {
+            let message = 'Invitee reject your invitation.';
+            this.players[id].socket.emit('display.error', message);
+          });
+
+//IF USER CHOOSE RANDOM OPPONENT, FIND OPPONENT AND START GAME
+          socket.on('random.opponent', (status) => {
+            //CALLING FUNCTION: INSERT OR UPDATE THE CURRENT CLIENT'S INFO TO 'players' AND 'unmatched'
+            this.joinGameForRandomOpponent(socket);
+            //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
+            const opponent = this.opponentOf(socket);
+            //FOUND OPPONENT AND START GAME
+            this.startGame(socket, opponent);
+            this.gameSession(socket);
+          });
+
+//DISCONNECTED (WHEN CLIENT DISCONNECT, AUTO RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'disconnect')
+              socket.on('disconnect', () => {
+                ////WHEN THE CURRENT CLIENT'S SOCKET DISCONNECTED, CONSOLE DISPLAY SOCKET ID
+                console.log(`Client disconnected. Client ID:${clientId}   Client Name: ${name}  Socket ID: ${id}`);
+                //SEND TO ALL CLIENTS, THE CURRENT CLIENT'S EVENT NAME 'client.disconnect'
+                //AND PASS SOCKET ID TO ALL CLIENTS
+                socket.broadcast.emit('client.disconnect', id);
+                if(this.players[id]){
+                  //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
+                  const opponent = this.opponentOf(socket);
+                  //IF HAS, SEND TO THE OPPONENT, THE CURRENT CLIENT'S EVENT NAME 'opponent.left'
+                  //AND PASS THE CURRENT CLIENT'S NAME TO OPPONENT
+                  if (opponent) {
+                    opponent.emit('opponent.left', {
+                      opponentName: this.players[id].name,
+                    });
+                  }
+                }
+                //DELETE FROM 'clients', 'players' and 'unmatched'
+                delete this.players[id];
+                this.unmatched = this.unmatched.filter((element) => element !== id);
+                this.clients = this.clients.filter((element) => element !== clientId);
+                delete this.emailandSocketId[email];
+              });
         }
         //IF clients HAS THE CLIENT ID, MEANS THE CLIENT'S ACCOUNT HAD CONNECTED TO A SOCKET, CANNOT CREATE ONE MORE SOCKET
         else {
@@ -161,18 +121,9 @@ class Socket {
     }
   }
 
-  joinGame(socket, clientId, name) {
+  joinGameForRandomOpponent(socket) {
     try {
-      //STORE THE CURRENT CLIENT'S ID, SOCKET NAME, OPPONENTID, SYMBOL, SOCKET TO 'players'
-      //players = { socketId : {clientId,name,{opponent:null},{symbol:X},socket} }
       const { id } = socket;
-      this.players[id] = {
-        clientId,
-        name,
-        opponent: null,
-        symbol: 'X',
-        socket,
-      };
       //CHECK 'unmatched' ARRAY TO SEE WHETHER HAS SOCKET ID IS WAITING OPPONENT:
       if (this.unmatched.length > 0) {
         //IF HAS, UPDATE THE CURRENT CLIENT'S OPPONENTID, SYMBOL='O' AND OPPONENT'S OPPONENTID
@@ -189,7 +140,45 @@ class Socket {
       }
     }
     catch (error) {
-      throw new Error(`JoinGame Error: ${error.message}`);
+      throw new Error(`JoinGameForRandomOpponent Error: ${error.message}`);
+    }
+  }
+
+  async joinGameForInviteOpponent(socket, email, inputEmail) {
+    try {
+      const { id } = socket;
+      //USE INPUT EMAIL TO FIND INVITEE SOCKET ID FROM 'emailandSocketId'
+      let socketId = this.emailandSocketId[inputEmail];
+      //DO INPUT VALIDATION FOR THE INVITEE'S EMAIL
+      let self = inputEmail === email;
+      let matched = this.unmatched.includes(socketId);
+      const emailFormat = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+      let err = '';
+      if (!inputEmail)
+        err = 'Please enter an email.';
+      else if (!emailFormat.test(inputEmail))
+        err = 'Wrong email format.';
+      else if (self)
+        err = 'Email invalid.';
+      else if(!socketId){
+        const [userResult] = await mysql.execute(query.searchUserByEmail, [inputEmail]);
+        if (userResult.length <= 0)
+          err = 'Cannot find this player.';
+        else
+          err = 'Player is not in game session.';
+      }
+      else if (socketId && matched)
+        err = 'The player has already in other challenge.'
+      else if (socketId && !matched) {
+        let reqMessage = this.players[id].name + ' invite you to have a challenge, accept?';
+        this.players[socketId].socket.emit('request.invitation', { reqMessage, id });
+      }
+      if (err) {
+        socket.emit('display.error', err);
+      }
+    }
+    catch (error) {
+      throw new Error(`JoinGameForInviteOpponent Error: ${error.message}`);
     }
   }
 
@@ -207,6 +196,102 @@ class Socket {
       throw new Error(`OpponentOf Error: ${error.message}`);
     }
   }
+
+  startGame(socket, opponent){
+    if (opponent) {
+      const { id } = socket;
+      //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'game.begin'
+      //AND PASS CURRENT CLIENT'S SYMBOL AND OPPONENT'S NAME TO CURRENT CLIENT
+      socket.emit('game.begin', {
+        symbol: this.players[id].symbol,
+        opponentName: this.players[opponent.id].name,
+      });
+      //SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'game.begin'
+      //AND PASS OPPONENT'S SYMBOL AND CURRENT CLIENT'S NAME TO OPPONENT
+      opponent.emit('game.begin', {
+        symbol: this.players[opponent.id].symbol,
+        opponentName: this.players[id].name,
+      });
+    }
+  }
+
+  gameSession(socket){
+    const { id } = socket;
+    const { clientId, name } = socket.handshake.query;
+
+//REQUEST RECHALLENGE (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'request.rechallenge')
+    //CHECK WHETHER THE CURRENT CLIENT HAS AN OPPONENT OR NOT
+    //IF HAS, SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'rechallenge.request'
+    //AND PASS REQUEST MSG TO OPPONENT
+    socket.on('request.rechallenge', (reqMessage) => {
+      const opponent = this.opponentOf(socket);
+      if (!opponent) return;
+      opponent.emit('rechallenge.request', reqMessage);
+    });
+
+//CONFIRM RECHALLENGE WITH SAME OPPONENT, RESTART GAME (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'restart.game')
+    socket.on('restart.game', (reqMessage) => {
+      const opponent = this.opponentOf(socket);
+      if (opponent) {
+        //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'game.begin'
+        //AND PASS CURRENT CLIENT'S SYMBOL AND OPPONENT'S NAME TO CURRENT CLIENT
+        socket.emit('game.begin', {
+          symbol: this.players[id].symbol,
+          opponentName: this.players[opponent.id].name,
+        });
+        //SEND TO OPPONENT, OPPONENT'S SOCKET'S EVENT NAME 'game.begin'
+        //AND PASS OPPONENT'S SYMBOL AND CURRENT CLIENT'S NAME TO OPPONENT
+        opponent.emit('game.begin', {
+          symbol: this.players[opponent.id].symbol,
+          opponentName: this.players[id].name,
+        });
+      }
+    });
+
+//WHEN PLAYER MAKE ACTION (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'make.move')
+    socket.on('make.move', (data) => {
+      //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT:
+      const opponent = this.opponentOf(socket);
+      //IF NO OPPONENT, RETURN NO ACTION
+      if (!opponent) return;
+      //IF HAS OPPONENT, SEND TO THE CURRENT CLIENT, OPPONENT EVENT NAME 'move.made'
+      //AND PASS OPPONENT'S SOCKET NAME TO CURRENT CLIENT WITH MERGING OPPONENT'S data
+      //data IS FROM FRONT END SIDE, CONTAINS CELL SYMBOL AND CELL ATTRIBUTE ID
+      socket.emit('move.made', { ...data, opponentName: this.players[opponent.id].name });
+      //SEND TO THE OPPONENT, THE CURRENT CLIENT EVENT NAME 'move.made'
+      //AND PASS THE data TO OPPONENT
+      opponent.emit('move.made', data);
+    });
+
+//WHEN GAME OVER  (RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'game.over')
+    //GET GAME RESULT AND RUN QUERY TO UPDATE USER SCORE
+    //CALCULATION: total_played PLUS ONE AND IF THE PLAYER WIN, total_win PLUS ONE
+    //IF UPDATE SUCCESSFULLY, SEND TO THE CURRENT CLIENT'S SOCKET, THE CURRENT CLIENT EVENT NAME 'score.inserted'
+    //AND PASS THE SCORE DATA TO CURRENT CLIENT'S SOCKET
+    socket.on('game.over', async (gameResult) => {
+      const [userResult] =  await mysql.execute(query.searchUserById, [this.players[id].clientId]);
+      if (userResult.length == 1) {
+        let {total_played, total_win, percentage} = userResult[0];
+        if (gameResult.length > 0) {
+          total_played++;
+          if (gameResult == 'WIN')
+            total_win++;
+          percentage = Math.round(total_win/total_played * 100);
+          const opponent = this.opponentOf(socket);
+          let opponentName = '';
+          if (opponent)
+            opponentName = this.players[opponent.id].name;
+          const doneInsertScore = await mysql.execute(query.insertScore, [this.players[id].clientId, this.players[opponent.id].clientId, gameResult]);
+          const doneUpdateUserScore = await mysql.execute(query.updateUserScore, [total_played, total_win, percentage, this.players[id].clientId]);
+          if (doneInsertScore && doneUpdateUserScore)
+            socket.emit('score.inserted', {opponentName, gameResult, total_played, total_win, percentage});
+        }
+        else
+          socket.emit('score.noupdate', {total_played, total_win, percentage});
+      }
+   });
+  }
+
 }
 
 module.exports = Socket;

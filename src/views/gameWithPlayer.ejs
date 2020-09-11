@@ -14,6 +14,11 @@
         background-image: url("https://ak.picdn.net/shutterstock/videos/21184336/thumb/1.jpg");
         background-size: 100%;
       }
+      /* ALERT MESSAGES FOR INVITE OPPONENT*/
+      .alert {
+        text-align: center;
+        margin-top: 10px;
+      }
       /* TOP BAR*/
       ul {
         list-style-type: none;
@@ -69,6 +74,19 @@
         background-color: rgb(0,0,0); /* Fallback color */
         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
       }
+      #myModal2 {
+        display: block; /* Display by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: 150px; /* Location of the box */
+        left: 0;
+        top: 0;
+        align-items: center;
+        justify-content: center;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+      }
       /* MODAL CONTENT */
       .modal-content {
         position: relative;
@@ -89,9 +107,14 @@
         text-align: center;
         font-size: 1em;
       }
-      .modal-body button {
+      #modalBody button {
         color: black;
         background-color: #ADD8E6;
+        margin: 5%;
+      }
+      #resultModalBody button {
+        color: black;
+        background-color:#ADD8E6;
         margin-bottom: 5px;
       }
       .modal-body button:hover {
@@ -134,10 +157,10 @@
     <!-- MODAL DISPLAY WHEN GAME END -->
     <div id="myModal" class="modal">
       <div class="modal-content">
-        <div class="modal-body">
+        <div id="resultModalBody" class="modal-body">
           <table class="table table-borderless">
             <tbody>
-              <tr> <td style="width:40%">Your Name: </td> <td style="width:60%; color:blue;"><%= name %></td> </tr>
+              <tr> <td style="width:40%">Your Name: </td> <td style="width:60%; color:blue;"><%= userInfo.name %></td> </tr>
               <tr> <td style="width:40%">Opponent Name: </td> <td id="displayOpponentName" style="width:60%; color:blue;"></td> </tr>
               <tr> <td style="width:40%">Your Result: </td> <td id="displayResult" style="width:60%; color:blue;"></td> </tr>
               <tr> <td style="width:40%">Your Percentage: </td> <td id="displayPercentage" style="width:60%; color:blue;"></td> </tr>
@@ -154,6 +177,16 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- MODAL DISPLAY BEFORE GAME START -->
+  <div id="myModal2">
+    <div class="modal-content">
+      <div id="modalBody" class="modal-body">
+        <button id="inviteOpponent" onclick="inviteOpponent()">Invite Opponent</button>
+        <button id="randomOpponent" onclick="randomOpponent()">Random Opponent</button>
+      </div>
+  </div>
   </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -176,19 +209,92 @@
 
       //CONNECT TO SOCKET, GET USER ID AND NAME WHICH STORED IN SESSION (PASS FROM HOME CONTROLLER)
       const url = window.location.origin;
-      const socket = io.connect( `${url}?clientId=${<%- JSON.stringify(clientId) %>}&name=${<%- JSON.stringify(name) %>}`);
+      const socket = io.connect( `${url}?clientId=${<%- JSON.stringify(userInfo.id) %>}&name=${<%- JSON.stringify(userInfo.name) %>}`);
 
-      //WHEN USER CLICK RECHALLENGE BUTTON,
-      //SEND TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'request.rechallenge'
+      //WHEN USER CLICK INVITE OPPONENT BUTTON, DISPLAY MODAL CONTENT TO LET USER ENTER INVITEE EMAIL
+      const inviteOpponent = () =>  {
+        const html = `<p>Enter invitee's email:</p>
+        <input type="email" id="email" class="form-control" placeholder="Email" required>
+        <div id="errorMessage" class="alert alert-danger" role="alert" style="display: none;"></div>
+        <button type="button" class="btn btn-default" style="background-color:#90EE90;" onclick="inviteHandler()">Invite</button>
+        <button type="button" class="btn btn-default" onclick="backHandler()">Back</button>`;
+        document.getElementById('modalBody').innerHTML = html;
+      }
+
+      //WHEN USER CLICK INVITE, SEND INPUT VALUE TO SOCKET EVENT NAME 'invite.opponent' AND HIDE THE MODAL
+      function inviteHandler() {
+        let inputEmail = document.getElementById('email').value;
+        socket.emit('invite.opponent', inputEmail);
+        const html = `<h5>Invited. Please wait for invitee accept. </h5>`;
+        document.getElementById('modalBody').innerHTML = html;
+      }
+
+      //WHEN USER CLICK BACK
+      function backHandler() {
+        const html = `<button id="inviteOpponent" onclick="inviteOpponent()">Invite Opponent</button>
+        <button id="randomOpponent" onclick="randomOpponent()">Random Opponent</button>`;
+        document.getElementById('modalBody').innerHTML = html;
+      }
+
+      //WHEN USER CLICK RANDOM OPPONENT BUTTON,
+      //SEND TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'random.opponent'
       //AND PASS CONFIRM MSG TO CURRENT CLIENT
-      const rechallengeFunction = () => {
+      const randomOpponent = () =>  {
         try {
-          let reqMessage = 'Your opponent request for rechallenge, accept?';
-          socket.emit('request.rechallenge', reqMessage);
+          let status = true;
+          socket.emit('random.opponent', status);
+          document.getElementById('myModal2').style.display = 'none';
         } catch (error) {
-        throw new Error(`RechallengeFunction Error: ${error.message}`);
+          throw new Error(`RechallengeFunction Error: ${error.message}`);
         }
       }
+
+      //DISABLE BOARD AT THE BEGINNING
+      //AND CALLING THE makeMove FUNCTION WHEN PLAYER CLICK BUTTON WITH IT'S CELL ATTRIBUTE ID
+      $(function() {
+        $('.board button').attr('disabled', true);
+        $('.board button').click(function() {
+          makeMove($(this).attr('id'));
+        });
+      });
+
+      //IF NOT THE CURRENT CLIENT'S TURN, DISPLAY OPPONENT LEAVE MESSAGE AND DISABLE THE BOARD
+      //IF YES, DISPLAY YOUR TURN MESSAGE AND ENABLE THE BOARD AND DISABLE CLICKED CELLS
+      const renderTurnMessage = (opponentName) => {
+        try {
+          if (!myTurn) {
+            $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b>'s turn`);
+            $('.board button').attr('disabled', true);
+          }
+          else {
+            $('#message').text('Your turn');
+            $('.board button').removeAttr('disabled');
+            $('.board button').each(function() {
+              if ($(this).text().length)
+                $(this).attr('disabled', true);
+            });
+          }
+        }
+        catch (error) {
+          throw new Error(`RenderTurnMessage Error: ${error.message}`);
+        }
+      };
+
+      //IF myTurn = false MEANS NOT THE CURRENT CLIENT'S TURN, RETURN NO ACTION
+      //IF THE CELL HAS ATTRIBUTE VALUE, RETURN NO ACTION
+      //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'make.move'
+      //AND PASS SYMBOL AND POSITION (CELL ATTRIBUTE ID)
+      const makeMove = (position) => {
+        try {
+          if (!myTurn) return;
+          if ($(this).text().length) return; //validate
+          socket.emit('make.move', { symbol, position });
+
+        }
+        catch (error) {
+          throw new Error(`MakeMove Error: ${error.message}`);
+        }
+      };
 
       //RETURN 'boardState' OBJECT CONTAINS 9 CELLS ATTRIBUTES ID (r0c0, r0c1, ..., r2c2)
       //AND THEIR VALUES ('X', 'O' or '')
@@ -202,7 +308,7 @@
           return boardState;
         }
         catch (error) {
-          throw new Error(`getBoardState Error: ${error.message}`);
+          throw new Error(`GetBoardState Error: ${error.message}`);
         }
       };
 
@@ -275,51 +381,45 @@
         }
       };
 
-      //IF myTurn = false MEANS NOT THE CURRENT CLIENT'S TURN, RETURN NO ACTION
-      //IF THE CELL HAS ATTRIBUTE VALUE, RETURN NO ACTION
-      //SENT TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'make.move'
-      //AND PASS SYMBOL AND POSITION (CELL ATTRIBUTE ID)
-      const makeMove = (position) => {
+      //WHEN USER CLICK RECHALLENGE BUTTON,
+      //SEND TO CURRENT CLIENT, CLIENT'S SOCKET'S EVENT NAME 'request.rechallenge'
+      //AND PASS CONFIRM MSG TO CURRENT CLIENT
+      const rechallengeFunction = () => {
         try {
-          if (!myTurn) return;
-          if ($(this).text().length) return; //validate
-          socket.emit('make.move', { symbol, position });
+          let reqMessage = 'Your opponent request for rechallenge, accept?';
+          socket.emit('request.rechallenge', reqMessage);
+        } catch (error) {
+        throw new Error(`RechallengeFunction Error: ${error.message}`);
         }
-        catch (error) {
-          throw new Error(`MakeMove Error: ${error.message}`);
-        }
-      };
+      }
 
-      //IF NOT THE CURRENT CLIENT'S TURN, DISPLAY OPPONENT LEAVE MESSAGE AND DISABLE THE BOARD
-      //IF YES, DISPLAY YOUR TURN MESSAGE AND ENABLE THE BOARD AND DISABLE CLICKED CELLS
-      const renderTurnMessage = (opponentName) => {
-        try {
-          if (!myTurn) {
-            $('#message').html(`Your opponent <b style='color:blue'>${opponentName}</b>'s turn`);
-            $('.board button').attr('disabled', true);
-          }
-          else {
-            $('#message').text('Your turn');
-            $('.board button').removeAttr('disabled');
-            $('.board button').each(function() {
-              if ($(this).text().length)
-                $(this).attr('disabled', true);
-            });
-          }
+      //RECEIVE FROM OPPONENT'S SOCKET, EVENT NAME 'rechallenge.request'
+      //AND POP OUT WINDOW TO CONFIRM RECHALLENGE
+      //IF CONFIRM, SEND TO CURRENT CLIENT'S SOCKET, SOCKET'S EVENT NAME 'restart.game'
+      //AND PASS REQUEST MSG TO CURRENT CLIENT
+      socket.on('rechallenge.request', (reqMessage) => {
+        if (window.confirm(reqMessage)) {
+          socket.emit('restart.game', reqMessage);
         }
-        catch (error) {
-          throw new Error(`RenderTurnMessage Error: ${error.message}`);
-        }
-      };
-
-      //DISABLE BOARD AT THE BEGINNING
-      //AND CALLING THE makeMove FUNCTION WHEN PLAYER CLICK BUTTON WITH IT'S CELL ATTRIBUTE ID
-      $(function() {
-        $('.board button').attr('disabled', true);
-        $('.board button').click(function() {
-          makeMove($(this).attr('id'));
-        });
       });
+
+      socket.on('request.invitation', (obj) => {
+        if (window.confirm(obj.reqMessage)) {
+          console.log(obj.id);
+          socket.emit('accept.invitation', obj.id);
+        }
+        else {
+          socket.emit('reject.invitation', obj.id);
+        }
+      });
+
+      socket.on('display.error', (err) => {
+        inviteOpponent();
+        document.getElementById('myModal2').style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorMessage').innerHTML = err;
+      }
+    );
 
       //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'game.begin'
       //AND CALLING renderTurnMessage FUNCTION WITH OPPONENT NAME
@@ -335,21 +435,12 @@
         gameResult = '';
         renderTurnMessage(opponentName);
         document.getElementById('myModal').style.display = 'none';
+        document.getElementById('myModal2').style.display = 'none';
         $('.board button').each(function() {
            $(this).text('');
         });
         if (myTurn)
           $('.board button').removeAttr('disabled');
-      });
-
-      //RECEIVE FROM OPPONENT'S SOCKET, EVENT NAME 'rechallenge.request'
-      //AND POP OUT WINDOW TO CONFIRM RECHALLENGE
-      //IF CONFIRM, SEND TO CURRENT CLIENT'S SOCKET, SOCKET'S EVENT NAME 'restart.game'
-      //AND PASS REQUEST MSG TO CURRENT CLIENT
-      socket.on('rechallenge.request', (reqMessage) => {
-        if (window.confirm(reqMessage)) {
-          socket.emit('restart.game', reqMessage);
-        }
       });
 
       //RECEIVE FROM CURRENT CLIENT'S SOCKET, EVENT NAME 'move.made'
@@ -405,6 +496,7 @@
         }
         $('#displayOpponentName').html(`${opponentName} ( Your Opponent Left )`);
         document.getElementById('myModal').style.display = 'block';
+        document.getElementById('myModal2').style.display = 'none';
         $('#rechallenge').attr('hidden', true);
         $('.board button').attr('disabled', true);
       });

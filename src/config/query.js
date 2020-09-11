@@ -26,18 +26,18 @@ CREATE TABLE scores(
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 `;
 
-exports.searchUser = `
+exports.searchUserByEmail = `
 SELECT * FROM users
 WHERE email = ?;
 `;
 
-exports.searchUserScore = `
-SELECT name, total_win, total_played, percentage FROM users
+exports.searchUserById = `
+SELECT * FROM users
 WHERE id = ?;
 `;
 
-exports.searchAllUserScore = `
-SELECT name, total_win, total_played, percentage FROM users
+exports.searchAllUsersByTotalPlayed = `
+SELECT * FROM users
 WHERE total_played != 0
 ORDER BY percentage DESC;
 `;

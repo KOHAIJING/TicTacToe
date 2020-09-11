@@ -34,7 +34,7 @@ async loginUser(req, res) {
     //IF VALIDRESULT HAS NO ERROR
     if (validResult.isEmpty()) {
       //CHECK WHETHER EMAIL REGISTERED IS MATCH OR NOT
-      const [result] = await mysql.execute(query.searchUser, [userEmail]);
+      const [result] = await mysql.execute(query.searchUserByEmail, [userEmail]);
       if (result.length <= 0) {
         await req.flash('loginErrors', 'Invalid Email Address!');
         return res.redirect('/login');
@@ -47,8 +47,7 @@ async loginUser(req, res) {
       }
       //SET LOGIN SESSION AND REDERING HOME PAGE
       req.session.isLoggedIn = true;
-      req.session.id = result[0].id;
-      req.session.name = result[0].name;
+      req.session.userInfo = result[0];
       req.session.save();
       return res.redirect('/menu');
     }
@@ -81,7 +80,7 @@ async registerUser(req, res) {
     //IF VALIDRESULT HAS NO ERROR
     if (validResult.isEmpty()) {
       //CHECK WHETHER EMAIL HAS BEEN REGISTERED
-      const [result] = await mysql.execute(query.searchUser, [userEmail]);
+      const [result] = await mysql.execute(query.searchUserByEmail, [userEmail]);
       if (result.length > 0) {
         await req.flash('registerErrors', 'This E-mail already in use!');
         await req.flash('oldName', userName);
