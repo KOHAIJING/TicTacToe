@@ -36,13 +36,13 @@ async loginUser(req, res) {
       //CHECK WHETHER EMAIL REGISTERED IS MATCH OR NOT
       const [result] = await mysql.execute(query.searchUserByEmail, [userEmail]);
       if (result.length <= 0) {
-        await req.flash('loginErrors', 'Invalid Email Address!');
+        await req.flash('loginErrors', 'Invalid email address or wrong password!');
         return res.redirect('/login');
       }
       //CHECK WHETHER PASSWORD REGISTERED IS MATCH OR NOT
       const bool = await bcrypt.compare(userPass, result[0].password);
       if (!bool) {
-        await req.flash('loginErrors', 'Invalid Password!');
+        await req.flash('loginErrors', 'Invalid email address or wrong password!');
         return res.redirect('/login');
       }
       //SET LOGIN SESSION AND REDERING HOME PAGE
