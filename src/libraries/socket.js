@@ -44,33 +44,38 @@ class Socket {
             socket,
           };
 
-//IF USER CHOOSE INVITE OPPONENT, FIND THE OPPONENT, SEND INVITATION, IF INVITEE ACCEPT THEN START GAME
+//IF USER CHOOSE INVITE OPPONENT, RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'invite.opponent' AND RECEIVED INPUT EMAIL
           socket.on('invite.opponent', (inputEmail) => {
-            //CALLING FUNCTION: INSERT OR UPDATE THE CURRENT CLIENT'S INFO TO 'players' AND 'unmatched'
+            //CALLING FUNCTION: USE INPUT EMAIL TO FIND INVITEE, SEND TO INVITEE'S SOCKET, EVENT NAME 'request.invitation' TO REQUEST ACCEPT
+			//AND SEND TO CLIENT'S SOCKET, EVENT NAME 'waiting.accept' TO SHOW WAITING MESSAGE
             this.joinGameForInviteOpponent(socket, email, inputEmail);
             //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
             const opponent = this.opponentOf(socket);
-            //FOUND OPPONENT AND START GAME
+            //IF FOUND OPPONENT THEN START GAME
             this.startGame(socket, opponent);
             this.gameSession(socket);
           });
 
-// ACCEPT INVITATION, UPDATE THE INVITEE'S OPPONENTID, SYMBOL='O' AND OPPONENT'S OPPONENTID
-          socket.on('accept.invitation', (socketId) => {
+//ACCEPT INVITATION, UPDATE THE INVITEE'S OPPONENTID, SYMBOL='O' AND INVITEE'S OPPONENTID
+//AT HERE, THE 'id' AND 'socket' REPRESENTED INVITEE'S SOCKET ID AND SOCKET
+//'invitationOwnerId' AND 'invitationOwnerSocket'  REPRESENTED INVITATION OWNER'S SOCKET ID AND SOCKET
+          socket.on('accept.invitation', (invitationOwnerId) => {
             this.players[id].symbol = 'O';
-            this.players[id].opponent = socketId;
-            this.players[socketId].opponent = id;
+            this.players[id].opponent = invitationOwnerId;
+            this.players[invitationOwnerId].opponent = id;
             //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
-            const opponent = this.opponentOf(socket);
-            //FOUND OPPONENT AND START GAME
-            this.startGame(socket, opponent);
+            const invitationOwnerSocket = this.opponentOf(socket);
+            //IF FOUND OPPONENT THEN START GAME
+            this.startGame(socket, invitationOwnerSocket);
             this.gameSession(socket);
           });
 
-//REJECT INVITATION, SEND TO THE INVITATION OWNER'S SOCKET TO DISPLAY REJECT MESSAGE
-          socket.on('reject.invitation', (id) => {
+//REJECT INVITATION, SEND TO THE INVITATION OWNER'S SOCKET, EVENT NAME 'display.error' TO DISPLAY REJECT MESSAGE
+//AT HERE, THE 'invitationOwnerId' AND 'invitationOwnerSocket'  REPRESENTED INVITATION OWNER'S SOCKET ID AND SOCKET
+          socket.on('reject.invitation', (invitationOwnerId) => {
             let message = 'Invitee reject your invitation.';
-            this.players[id].socket.emit('display.error', message);
+            const invitationOwnerSocket = this.players[invitationOwnerId].socket;
+            invitationOwnerSocket.emit('display.error', message);
           });
 
 //IF USER CHOOSE RANDOM OPPONENT, FIND OPPONENT AND START GAME
@@ -79,7 +84,7 @@ class Socket {
             this.joinGameForRandomOpponent(socket);
             //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
             const opponent = this.opponentOf(socket);
-            //FOUND OPPONENT AND START GAME
+            //IF FOUND OPPONENT THEN START GAME
             this.startGame(socket, opponent);
             this.gameSession(socket);
           });
@@ -161,10 +166,10 @@ class Socket {
     try {
       const { id } = socket;
       //USE INPUT EMAIL TO FIND INVITEE SOCKET ID FROM 'emailandSocketId'
-      let socketId = this.emailandSocketId[inputEmail];
+      let invitationOwnerId = this.emailandSocketId[inputEmail];
       //DO INPUT VALIDATION FOR THE INVITEE'S EMAIL
       let self = inputEmail === email;
-      let matched = this.unmatched.includes(socketId);
+      let matched = this.unmatched.includes(invitationOwnerId);
       const emailFormat = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
       let err = '';
       if (!inputEmail)
@@ -173,25 +178,27 @@ class Socket {
         err = 'Wrong email format.';
       else if (self)
         err = 'Email invalid.';
-      else if(!socketId){
+      else if(!invitationOwnerId){
         const [userResult] = await mysql.execute(query.searchUserByEmail, [inputEmail]);
         if (userResult.length <= 0)
           err = 'Cannot find this player.';
         else
           err = 'Player is not in game session.';
       }
-      else if (socketId && matched)
+      else if (invitationOwnerId && matched)
         err = 'The player has already in other challenge.'
-      else if (socketId && !matched) {
+      else if (invitationOwnerId && !matched) {
         //IF EMAIL CORRECT AND THE PLAYER DONT HAVE MATCH,
         //SEND TO INVITEE'S SOCKET, EVENT NAME 'request.invitation' TO REQUEST ACCEPT, PASS CLIENT'S SOCKET ID
         //AND SEND TO CLIENT'S SOCKET, EVENT NAME 'waiting.accept' TO SHOW WAITING MESSAGE
         let reqMessage = this.players[id].name + ' invite you to have a challenge, accept?';
         let waitingMessage = 'Invited. Please wait for invitee accept.';
-        this.players[socketId].socket.emit('request.invitation', { reqMessage, id });
+        const invitationOwnerSocket = this.players[invitationOwnerId].socket;
+        invitationOwnerSocket.emit('request.invitation', { reqMessage, id });
         socket.emit('waiting.accept', waitingMessage);
       }
       if (err) {
+        //SEND TO CLIENT'S SOCKET, EVENT NAME 'display.error' TO DISPLAY ERROR MESSAGE FOR FAIL INVITATION
         socket.emit('display.error', err);
       }
     }

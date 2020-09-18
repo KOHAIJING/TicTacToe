@@ -472,7 +472,7 @@
         }
       });
 
-      //RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'display.error' AND DISPLAY ERROR MESSAGE FOR INVITATION
+      //RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'display.error' AND DISPLAY ERROR MESSAGE FOR FAIL INVITATION
       socket.on('display.error', (err) => {
         inviteOpponent();
         document.getElementById('myModal2').style.display = 'block';
@@ -488,9 +488,9 @@
 
       //RECEIVE FROM INVITATION OWNER'S SOCKET, EVENT NAME 'request.invitation'
       //AND POP OUT WINDOW TO ACCEPT INVITATION
-      //IF ACCEPT, SEND TO CURRENT CLIENT'S SOCKET, SOCKET'S EVENT NAME 'accept.invitation'
+      //IF ACCEPT, SEND TO CURRENT CLIENT'S SOCKET (INVITEE), EVENT NAME 'accept.invitation'
       //AND PASS INVITATION OWNER'S SOCKET ID
-      //IF REJECT, SEND TO CURRENT CLIENT'S SOCKET, SOCKET'S EVENT NAME 'reject.invitation'
+      //IF REJECT, SEND TO CURRENT CLIENT'S SOCKET (INVITEE), EVENT NAME 'reject.invitation'
       //AND PASS INVITATION OWNER'S SOCKET ID
       socket.on('request.invitation', (obj) => {
         if (window.confirm(obj.reqMessage)) {
