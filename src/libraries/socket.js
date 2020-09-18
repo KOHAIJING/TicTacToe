@@ -47,7 +47,7 @@ class Socket {
 //IF USER CHOOSE INVITE OPPONENT, RECEIVE FROM CLIENT'S SOCKET, EVENT NAME 'invite.opponent' AND RECEIVED INPUT EMAIL
           socket.on('invite.opponent', (inputEmail) => {
             //CALLING FUNCTION: USE INPUT EMAIL TO FIND INVITEE, SEND TO INVITEE'S SOCKET, EVENT NAME 'request.invitation' TO REQUEST ACCEPT
-			//AND SEND TO CLIENT'S SOCKET, EVENT NAME 'waiting.accept' TO SHOW WAITING MESSAGE
+            //AND SEND TO CLIENT'S SOCKET, EVENT NAME 'waiting.accept' TO SHOW WAITING MESSAGE
             this.joinGameForInviteOpponent(socket, email, inputEmail);
             //CALLING FUNCTION: RETURN OPPONENT SOCKET OR RETURN NULL MEANS NO OPPONENT
             const opponent = this.opponentOf(socket);
